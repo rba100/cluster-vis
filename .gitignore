@@ -1,0 +1,7 @@
+# Input and output documents
+*.txt
+*.tsv
+*.csv
+
+# Python stuff
+__pycache__/*
