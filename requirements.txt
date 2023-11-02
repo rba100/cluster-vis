@@ -2,6 +2,6 @@ streamlit
 psycopg2-binary
 openai
 numpy
-sklearn
+scikit-learn
 plotly
 scipy
