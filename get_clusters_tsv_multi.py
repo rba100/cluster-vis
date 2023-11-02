@@ -21,7 +21,7 @@ data_cat_col_names = ['Gender','Region','Satisfaction Rating (Categorical)','Occ
 data = pd.read_csv("input.csv", sep='\t')
 data = data[data[data_col_name].apply(lambda x: isinstance(x, str) and x != "")]
 
-embeddings_result = np.array(get_embeddings(data[data_col_name].tolist(), conn))
+embeddings_result = get_embeddings(data[data_col_name].tolist(), conn)
 data['embedding'] = embeddings_result.tolist()
 embeddings_array = np.array(data['embedding'].tolist())
 

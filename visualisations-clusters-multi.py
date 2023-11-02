@@ -40,7 +40,7 @@ conn = psycopg2.connect(host='localhost', database='postgres', user='postgres', 
 cursor = conn.cursor()
 
 # Get embeddings for all lines at once
-embeddings = np.array(get_embeddings(lines, conn))
+embeddings = get_embeddings(lines, conn)
 words =  [{"line": line, "embedding": vector} for line, vector in zip(lines, embeddings)]
 
 # Perform clustering
