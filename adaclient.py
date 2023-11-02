@@ -53,4 +53,4 @@ def get_embeddings(text_list, conn):
     cursor.close()
     conn.commit()
 
-    return all_embeddings
+    return np.array(all_embeddings)

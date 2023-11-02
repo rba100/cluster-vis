@@ -5,3 +5,4 @@
 
 # Python stuff
 __pycache__/*
+.streamlit/secrets.toml

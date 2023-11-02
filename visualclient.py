@@ -3,17 +3,8 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 import plotly.graph_objects as go
-from gptclient import generate_cluster_name
-from adaclient import get_embeddings
-from vectordbclient import get_closest_words;
 
-def get_tsne_data(lines, n_clusters=10):
-    # Connect to the database
-    conn = psycopg2.connect(host='localhost', database='postgres', user='postgres', password='postgres')
-    cursor = conn.cursor()
-
-    # Get embeddings for all lines at once
-    embeddings = np.array(get_embeddings(lines, conn))
+def get_tsne_data(embeddings, n_clusters=10):
 
     # Perform clustering
     n_init = 10
@@ -24,17 +15,8 @@ def get_tsne_data(lines, n_clusters=10):
     # Normalize the cluster centers
     cluster_centers = cluster_centers / np.linalg.norm(cluster_centers, axis=1)[:, np.newaxis]
 
-    # Lookup nearest 5 words for each normalized cluster center
-    labels = []
-    for i, center in enumerate(cluster_centers):
-        closest_words = get_closest_words(center, cursor)
-        labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
-
-    # Close the connection
-    conn.close()
-
     # Perform t-SNE dimensionality reduction
-    perplexity = min(25, len(lines) - 1)
+    perplexity = min(25, len(embeddings) - 1)
     learning_rate = max(1, min(200, len(embeddings) // 10))
 
     tsne = TSNE(n_components=2, perplexity=perplexity, metric="cosine", learning_rate=learning_rate)

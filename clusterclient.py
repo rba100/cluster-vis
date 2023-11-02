@@ -1,4 +1,3 @@
-import psycopg2
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
@@ -7,13 +6,9 @@ from gptclient import generate_cluster_name
 from adaclient import get_embeddings
 from vectordbclient import get_closest_words;
 
-def get_clusters(lines, n_clusters=10):
+def get_clusters(conn, embeddings, n_clusters=10):
     # Connect to the database
-    conn = psycopg2.connect(host='localhost', database='postgres', user='postgres', password='postgres')
     cursor = conn.cursor()
-
-    # Get embeddings for all lines at once
-    embeddings = np.array(get_embeddings(lines, conn))
 
     # Perform clustering
     n_init = 10
@@ -30,7 +25,6 @@ def get_clusters(lines, n_clusters=10):
         closest_words = get_closest_words(center, cursor)
         labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
 
-    # Close the connection
-    conn.close()
+    cursor.close()
 
-    return embeddings, kmeans.labels_, labels
+    return kmeans.labels_, labels

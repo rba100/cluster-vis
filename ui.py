@@ -25,7 +25,7 @@ if 'comparison_text' not in st.session_state:
 if 'lastfilterOut' not in st.session_state:
     st.session_state.lastfilterOut = False
 
-conn = psycopg2.connect(host='localhost', database='postgres', user='postgres', password='postgres')
+conn = psycopg2.connect(st.secrets["connectionString"])
 cursor = conn.cursor()
 
 #st.set_page_config(layout="wide")
@@ -49,7 +49,7 @@ isGenerate = st.button("Generate Scatter Plot")
 
     
 if (isfilter or (similarity_changed and st.session_state.tsne_data is not None and st.session_state.comparison_text.strip() != "")):
-    comparison_embedding = np.array(get_embeddings([st.session_state.comparison_text.strip()], conn)[0])
+    comparison_embedding = get_embeddings([st.session_state.comparison_text.strip()], conn)[0]
     similarities = cosine_similarity(st.session_state.vectors, comparison_embedding.reshape(1, -1)).flatten()
     if filterOut:
         mask = similarities < (1 - st.session_state.similarity_threshold)
@@ -62,8 +62,9 @@ if (isfilter or (similarity_changed and st.session_state.tsne_data is not None a
     st.plotly_chart(fig)
     
 if (isGenerate):
-    st.session_state.vectors, st.session_state.labels, descriptions = get_clusters(string_list, n_clusters)
-    st.session_state.tsne_data, _ = get_tsne_data(string_list, n_clusters)
+    st.session_state.vectors = get_embeddings(string_list, conn)
+    st.session_state.labels, descriptions = get_clusters(conn, st.session_state.vectors, n_clusters)
+    st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters)
     fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list)
     st.plotly_chart(fig)
 elif(st.session_state.tsne_data is not None and not isfilter):
