@@ -4,3 +4,4 @@ openai
 numpy
 sklearn
 plotly
+scipy
