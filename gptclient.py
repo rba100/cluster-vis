@@ -1,4 +1,5 @@
 import openai
+import concurrent.futures
 
 model = "gpt-3.5-turbo"
 
@@ -16,19 +17,35 @@ First reply with a list of themes, one for each cluster, then reply with a short
     completion = openai.ChatCompletion.create(model=model, messages=[{"role": "user", "content": prompt}])
     return completion.choices[0].message.content
 
+def generate_cluster_names_many(tasks):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        # Submit all tasks and collect futures
+        future_to_task = {executor.submit(generate_cluster_name, task["labels"], task["samples"]): i for i, task in enumerate(tasks)}
+        results = [None] * len(tasks)  # Pre-allocate the result list
+        for future in concurrent.futures.as_completed(future_to_task):
+            task_index = future_to_task[future]  # Get the original index of the task
+            results[task_index] = future.result()  # Place result in the correct order
+    return results
+
+
 def generate_cluster_name(labels, samples):
+    if isinstance(labels, list):
+        labels = ', '.join(labels)
+    
     nl = '\n'
 
     prompt = f"""
-Examine these survey responses:
+Examine these samples of text:
 ```
 {nl.join(samples)}
 ```
-These have been matched against the words: {', '.join(labels)}.
-Reply only with one or two words that describe the theme of these responses in the context of those words.
+These have been matched against the labels: {labels}.
+Give a name for a master label that encompasses the labels are in the context of the samples (or a description of the common theme if the labels are unhelpful).
 """
 
-    completion = openai.ChatCompletion.create(model=model, messages=[{"role": "user", "content": prompt}])
+    completion = openai.ChatCompletion.create(model=model, messages=[
+        {"role":"system","content":"You name categories. Reply only with one word names, or two word noun phrases."},
+        {"role": "user", "content": prompt}])
     return completion.choices[0].message.content
 
 def name_clusters_array(text_array):

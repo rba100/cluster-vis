@@ -1,5 +1,6 @@
 import streamlit as st
 from adaclient import get_embeddings
+from gptclient import generate_cluster_name, generate_cluster_names_many
 from clusterclient import get_clusters
 from vectordbclient import get_closest_words
 from visualclient import get_tsne_data, render_tsne_plotly
@@ -28,6 +29,9 @@ if 'comparison_text' not in st.session_state:
 if 'lastfilterOut' not in st.session_state:
     st.session_state.lastfilterOut = False
 
+if 'gptLabelling' not in st.session_state:
+    st.session_state.gptLabelling = False
+
 conn = psycopg2.connect(st.secrets["connectionString"])
 
 st.set_page_config(layout="wide")
@@ -39,10 +43,10 @@ col1, col2 = st.columns(2)
 with col1:
     inputText = st.text_area("Enter your text items, separated by newlines.")
     n_clusters = st.number_input("Specify number of clusters", min_value=1, max_value=20, value=8)
+    st.session_state.gptLabelling = st.checkbox("Use GPT to label clusters")
     isGenerate = st.button("Generate Scatter Plot")
 
     with st.expander("Filtering", expanded=False):
-        #st.subheader("Filtering")
         st.caption("Show or hide items that are similar to a given text.")
         st.session_state.comparison_text = st.text_input("Enter text for semantic filtering")
         similarity_threshold = st.slider("Similarity threshold", 0.0, 1.0, 0.5, 0.01)
@@ -74,6 +78,16 @@ with col2:
     if (isGenerate):
         st.session_state.vectors = get_embeddings(string_list, conn)
         st.session_state.labels, st.session_state.descriptions = get_clusters(conn, st.session_state.vectors, n_clusters)
+        if(st.session_state.gptLabelling):
+            tasks = []
+            for(i, label) in enumerate(st.session_state.descriptions):
+                samples = np.array(string_list)[st.session_state.labels == i]
+                sample_count = min(20, len(samples))
+                samples = np.random.choice(samples, sample_count, replace=False)
+                tasks.append({"labels": label, "samples": samples})
+            st.session_state.descriptions = generate_cluster_names_many(tasks)
+            #st.session_state.descriptions[i] = (generate_cluster_name(label, samples))
+
         st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters)
         fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions)
         st.plotly_chart(fig)
