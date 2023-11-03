@@ -16,6 +16,9 @@ if 'vectors' not in st.session_state:
 if 'labels' not in st.session_state:
     st.session_state.labels = None
 
+if 'descriptions' not in st.session_state:
+    st.session_state.descriptions = None
+
 if 'similarity_threshold' not in st.session_state:
     st.session_state.similarity_threshold = 0.5
 
@@ -48,10 +51,12 @@ with col1:
     st.session_state.comparison_text = st.text_input("Enter text for semantic filtering")
     string_list = inputText.strip().split('\n')
     st.caption("Items with similarity below the threshold will be hidden")
-    isfilter = (st.button("Filter") and st.session_state.comparison_text != '') or similarity_changed or filterOutChanged
+    isfilter = (st.button("Filter") or similarity_changed or filterOutChanged) \
+        and st.session_state.comparison_text.strip() != "" \
+        and st.session_state.tsne_data is not None
 
 with col2:
-    if (isfilter or (similarity_changed and st.session_state.tsne_data is not None and st.session_state.comparison_text.strip() != "")):
+    if (isfilter):
         comparison_embedding = get_embeddings([st.session_state.comparison_text.strip()], conn)[0]
         similarities = cosine_similarity(st.session_state.vectors, comparison_embedding.reshape(1, -1)).flatten()
         if filterOut:
@@ -61,16 +66,16 @@ with col2:
         filtered_data = st.session_state.tsne_data[mask]
         filtered_labels = st.session_state.labels[mask]
         filtered_string_list = np.array(string_list)[mask]
-        fig = render_tsne_plotly(filtered_data, filtered_labels, filtered_string_list)
+        fig = render_tsne_plotly(filtered_data, filtered_labels, filtered_string_list, st.session_state.descriptions)
         st.plotly_chart(fig)
         st.caption(f"Showing {len(filtered_data)} of {len(st.session_state.tsne_data)} items")
         
     if (isGenerate):
         st.session_state.vectors = get_embeddings(string_list, conn)
-        st.session_state.labels, descriptions = get_clusters(conn, st.session_state.vectors, n_clusters)
+        st.session_state.labels, st.session_state.descriptions = get_clusters(conn, st.session_state.vectors, n_clusters)
         st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters)
-        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list)
+        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions)
         st.plotly_chart(fig)
     elif(st.session_state.tsne_data is not None and not isfilter):
-        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list)
+        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions)
         st.plotly_chart(fig)
