@@ -44,7 +44,7 @@ Give a name for a master label that encompasses the labels are in the context of
 """
 
     completion = openai.ChatCompletion.create(model=model, messages=[
-        {"role":"system","content":"You name categories. Reply only with one word names, or two word noun phrases."},
+        {"role":"system","content":"en-GB. You name categories. Reply only with one word names, or two word noun phrases."},
         {"role": "user", "content": prompt}])
     return completion.choices[0].message.content
 
