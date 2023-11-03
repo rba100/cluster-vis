@@ -41,19 +41,20 @@ with col1:
     n_clusters = st.number_input("Specify number of clusters", min_value=1, max_value=20, value=8)
     isGenerate = st.button("Generate Scatter Plot")
 
-    st.subheader("Semantic Filtering")
-    similarity_threshold = st.slider("Similarity threshold", 0.0, 1.0, 0.5, 0.01)
-    filterOut = st.checkbox("Filter out")
-    filterOutChanged = filterOut != st.session_state.lastfilterOut
-    st.session_state.lastfilterOut = filterOut
-    similarity_changed = similarity_threshold != st.session_state.similarity_threshold
-    st.session_state.similarity_threshold = similarity_threshold
-    st.session_state.comparison_text = st.text_input("Enter text for semantic filtering")
-    string_list = inputText.strip().split('\n')
-    st.caption("Items with similarity below the threshold will be hidden")
-    isfilter = (st.button("Filter") or similarity_changed or filterOutChanged) \
-        and st.session_state.comparison_text.strip() != "" \
-        and st.session_state.tsne_data is not None
+    with st.expander("Filtering", expanded=False):
+        #st.subheader("Filtering")
+        st.caption("Show or hide items that are similar to a given text.")
+        st.session_state.comparison_text = st.text_input("Enter text for semantic filtering")
+        similarity_threshold = st.slider("Similarity threshold", 0.0, 1.0, 0.5, 0.01)
+        filterOut = st.checkbox("Filter out")
+        filterOutChanged = filterOut != st.session_state.lastfilterOut
+        st.session_state.lastfilterOut = filterOut
+        similarity_changed = similarity_threshold != st.session_state.similarity_threshold
+        st.session_state.similarity_threshold = similarity_threshold
+        string_list = inputText.strip().split('\n')
+        isfilter = (st.button("Filter") or similarity_changed or filterOutChanged) \
+            and st.session_state.comparison_text.strip() != "" \
+            and st.session_state.tsne_data is not None
 
 with col2:
     if (isfilter):
