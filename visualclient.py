@@ -47,7 +47,7 @@ def render_tsne_plotly(xtsne, labels, lines, label_descriptions):
                 marker=dict(
                     size=10,
                     color=color,  # use the discrete color for the current label
-                    opacity=0.7
+                    opacity=0.9
                 ),
                 customdata=np.array(lines)[indices],
                 hovertemplate='%{customdata}<extra></extra>',
