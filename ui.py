@@ -69,7 +69,7 @@ with col2:
         st.session_state.vectors = get_embeddings(string_list, conn)
         st.session_state.labels, descriptions = get_clusters(conn, st.session_state.vectors, n_clusters)
         st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters)
-        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list).
+        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list)
         st.plotly_chart(fig)
     elif(st.session_state.tsne_data is not None and not isfilter):
         fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list)
