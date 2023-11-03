@@ -43,7 +43,7 @@ These have been matched against the labels: {labels}.
 Give a name for a master label that encompasses the labels are in the context of the samples (or a description of the common theme if the labels are unhelpful).
 """
 
-    completion = openai.ChatCompletion.create(model=model, messages=[
+    completion = openai.ChatCompletion.create(model=model,  temperature=0, messages=[
         {"role":"system","content":"en-GB. You name categories. Reply only with one word (or a two word noun phrases if one word doesn't cut it)."},
         {"role": "user", "content": prompt}])
     content =  completion.choices[0].message.content.rstrip('.')

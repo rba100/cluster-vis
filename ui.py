@@ -42,9 +42,15 @@ col1, col2 = st.columns(2)
 
 with col1:
     inputText = st.text_area("Enter your text items, separated by newlines.")
-    n_clusters = st.number_input("Specify number of clusters", min_value=1, max_value=20, value=8)
-    st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters")
     isGenerate = st.button("Generate Scatter Plot")
+
+    with st.expander("Automatic cluster identification", expanded=False):
+        detectClusters = st.checkbox("Detect clusters automatically", value=True)
+        if(not detectClusters):
+            n_clusters = 1
+        else:
+            n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=20, value=8, disabled=not detectClusters)
+        st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters
 
     with st.expander("Filtering", expanded=False):
         st.caption("Show or hide items that are similar to a given text.")
@@ -59,6 +65,12 @@ with col1:
         isfilter = (st.button("Filter") or similarity_changed or filterOutChanged) \
             and st.session_state.comparison_text.strip() != "" \
             and st.session_state.tsne_data is not None
+    with st.expander("Help", expanded=False,):
+        st.caption("This tool groups similar text items together and presents them as a visual plot. You can then mouse over the points to see the corresponding text and manually identify common themes.")
+        st.caption("The first step is to enter your text items in the box above, one per line, then click the 'Generate Scatter Plot'.")
+        st.caption("To help you spot common themes you can specify a number of clusters to identiy and these will be colour-coded. This feature uses traditional statistical methods to identify clusters of similar items.")
+        st.caption("If you want to filter out items that are similar to a given text, enter the text in the box in the filter section and click the 'Filter' button. You can also choose to filter out or filter in the items.")
+        st.caption("If you want to name the clusters, click the 'Use OpenAI to name clusters' checkbox and click the 'Generate Scatter Plot' button again. This adds a few seconds to the processing time. Note that you can click on the items in the legend to hide or show that category.")
 
 with col2:
     if (isfilter):
