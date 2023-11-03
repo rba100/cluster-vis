@@ -43,7 +43,7 @@ col1, col2 = st.columns(2)
 with col1:
     inputText = st.text_area("Enter your text items, separated by newlines.")
     n_clusters = st.number_input("Specify number of clusters", min_value=1, max_value=20, value=8)
-    st.session_state.gptLabelling = st.checkbox("Use GPT to label clusters")
+    st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters")
     isGenerate = st.button("Generate Scatter Plot")
 
     with st.expander("Filtering", expanded=False):

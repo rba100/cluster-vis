@@ -44,9 +44,11 @@ Give a name for a master label that encompasses the labels are in the context of
 """
 
     completion = openai.ChatCompletion.create(model=model, messages=[
-        {"role":"system","content":"en-GB. You name categories. Reply only with one word names, or two word noun phrases."},
+        {"role":"system","content":"en-GB. You name categories. Reply only with one word (or a two word noun phrases if one word doesn't cut it)."},
         {"role": "user", "content": prompt}])
-    return completion.choices[0].message.content.rstrip('.')
+    content =  completion.choices[0].message.content.rstrip('.')
+    content = content[0].upper() + content[1:]
+    return content
 
 def name_clusters_array(text_array):
 
