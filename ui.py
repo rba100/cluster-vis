@@ -57,7 +57,7 @@ with col1:
         else:
             n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=20, value=8, disabled=not detectClusters)
         st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters
-        st.session_state.removeConceptText = st.text_input("Remove concept clustering")
+        st.session_state.removeConceptText = st.text_input("Remove concept from clustering")
 
     with st.expander("Filtering", expanded=False):
         st.caption("Show or hide items that are similar to a given text.")
@@ -83,7 +83,7 @@ with col1:
         st.caption("To help you spot common themes you can specify a number of clusters to identiy and these will be colour-coded. This feature uses traditional statistical methods to identify clusters of similar items.")
         st.caption("If you want to filter out items that are similar to a given text, enter the text in the box in the filter section and click the 'Filter' button. You can also choose to filter out or filter in the items.")
         st.caption("If you want to name the clusters, click the 'Use OpenAI to name clusters' checkbox and click the 'Generate Scatter Plot' button again. This adds a few seconds to the processing time. Note that you can click on the items in the legend to hide or show that category.")
-        st.caption("'Remove concept clustering'. If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
+        st.caption("'Remove concept from clustering'. If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
 
 with col2:
     if (isfilter):
