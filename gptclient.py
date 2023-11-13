@@ -1,21 +1,8 @@
 import openai
 import concurrent.futures
+import streamlit as st
 
 model = "gpt-3.5-turbo"
-
-def name_clusters_summary(text):
-
-    prompt = f"""
-This is a text analysis. Common words in a corpus have been identified by vector similarity search.
-Give a list of themes that a market researcher could look for in responses. Ignore terms that are clearly not helpful like 'none' or 'thanks'.
-```
-{text}
-```
-First reply with a list of themes, one for each cluster, then reply with a shorter list compiled from that first list, combining or removing as needed to obtain a concise list of themes, but do not combine things that are still interesting separately. The concise list doesn't have to be smaller than the clusters, it just needs to be the interesting labels to classify responses by. In brackets for each theme give a database column name for a bit column that marks whether a given body of text mentions that theme, in camelCase).
-"""
-
-    completion = openai.ChatCompletion.create(model=model, messages=[{"role": "user", "content": prompt}])
-    return completion.choices[0].message.content
 
 def generate_cluster_names_many(tasks):
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
@@ -27,7 +14,7 @@ def generate_cluster_names_many(tasks):
             results[task_index] = future.result()  # Place result in the correct order
     return results
 
-
+@st.cache_data(max_entries=40)
 def generate_cluster_name(labels, samples):
     if isinstance(labels, list):
         labels = ', '.join(labels)

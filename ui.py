@@ -1,6 +1,6 @@
 import streamlit as st
 from vectorclient import get_embeddings, reflect_vector
-from gptclient import generate_cluster_name, generate_cluster_names_many
+from gptclient import generate_cluster_names_many
 from clusterclient import get_clusters
 from vectordbclient import get_closest_words
 from visualclient import get_tsne_data, render_tsne_plotly
@@ -41,9 +41,16 @@ if 'removeConceptText' not in st.session_state:
 if 'use3d' not in st.session_state:
     st.session_state.use3d = False
 
-conn = psycopg2.connect(st.secrets["connectionString"])
+if 'randomSeed' not in st.session_state:
+    st.session_state.randomSeed = 42
 
 st.set_page_config(layout="wide")
+
+@st.cache_resource
+def connectToDb():
+    return psycopg2.connect(st.secrets["connectionString"])
+
+conn = connectToDb()
 
 st.title("Semantic Clustering")
 
@@ -89,6 +96,7 @@ with col1:
         st.caption("'Remove concept from clustering'. If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
 
     with st.expander("Experimental", expanded=False):
+        st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
         st.caption("You can try navigating the data in 3d, but it won't help you.")
         st.session_state.use3d = st.checkbox("Use 3D plot", False)
 
@@ -114,8 +122,8 @@ with col2:
         if(st.session_state.removeConceptText.strip() != ""):
             vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
             st.session_state.vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.vectors, vectorToRemove)
-        st.session_state.labels, st.session_state.descriptions = get_clusters(conn, st.session_state.vectors, n_clusters)
-        if(st.session_state.gptLabelling):
+        st.session_state.labels, st.session_state.descriptions = get_clusters(conn, st.session_state.vectors, n_clusters, random_state=st.session_state.randomSeed)
+        if(st.session_state.gptLabelling and n_clusters > 1):
             tasks = []
             for(i, label) in enumerate(st.session_state.descriptions):
                 samples = np.array(string_list)[st.session_state.labels == i]
@@ -123,14 +131,13 @@ with col2:
                 samples = np.random.choice(samples, sample_count, replace=False)
                 tasks.append({"labels": label, "samples": samples})
             st.session_state.descriptions = generate_cluster_names_many(tasks)
-            #st.session_state.descriptions[i] = (generate_cluster_name(label, samples))
 
-        st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters, dimensions=dimensions)
+        st.session_state.tsne_data = get_tsne_data(st.session_state.vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
         fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
         st.plotly_chart(fig)
     elif(st.session_state.tsne_data is not None and not isfilter):
         tsneDim = st.session_state.tsne_data.shape[1]
         if tsneDim != dimensions:
-            st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters, dimensions=dimensions)
+            st.session_state.tsne_data = get_tsne_data(st.session_state.vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
         fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
         st.plotly_chart(fig)

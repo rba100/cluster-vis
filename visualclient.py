@@ -3,27 +3,21 @@ from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 import plotly.graph_objects as go
 import plotly.express as px
+import streamlit as st
 
-def get_tsne_data(embeddings, n_clusters=10, dimensions=2):
-
-    # Perform clustering
-    n_init = 10
-    kmeans = KMeans(n_clusters=n_clusters, n_init=n_init)
-    kmeans.fit(embeddings)
-    cluster_centers = kmeans.cluster_centers_
-
-    # Normalize the cluster centers
-    cluster_centers = cluster_centers / np.linalg.norm(cluster_centers, axis=1)[:, np.newaxis]
+@st.cache_data(max_entries=4)
+def get_tsne_data(embeddings, dimensions=2, random_state=42):
 
     # Perform t-SNE dimensionality reduction
     perplexity = min(25, len(embeddings) - 1)
     learning_rate = max(1, min(200, len(embeddings) // 10))
 
-    tsne = TSNE(n_components=dimensions, perplexity=perplexity, metric="cosine", learning_rate=learning_rate, random_state=42)
+    tsne = TSNE(n_components=dimensions, perplexity=perplexity, metric="cosine", learning_rate=learning_rate, random_state=random_state)
     X_tsne = tsne.fit_transform(embeddings)
 
-    return X_tsne, kmeans.labels_
+    return X_tsne
 
+@st.cache_data(max_entries=4)
 def render_tsne_plotly(xtsne, labels, lines, label_descriptions, dimensions=2):
     if dimensions not in [2, 3, 4]:
         raise ValueError("dimensions must be 2 or 3, or... 4")

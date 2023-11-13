@@ -2,13 +2,13 @@ import numpy as np
 from sklearn.cluster import KMeans
 from vectordbclient import get_closest_words;
 
-def get_clusters(conn, embeddings, n_clusters=10):
+def get_clusters(conn, embeddings, n_clusters=10, random_state=42):
     # Connect to the database
     cursor = conn.cursor()
 
     # Perform clustering
     n_init = 10
-    kmeans = KMeans(n_clusters=n_clusters, n_init=n_init, random_state=42)
+    kmeans = KMeans(n_clusters=n_clusters, n_init=n_init, random_state=random_state)
     kmeans.fit(embeddings)
     cluster_centers = kmeans.cluster_centers_
 
