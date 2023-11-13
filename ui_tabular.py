@@ -83,7 +83,7 @@ with tab3:
                     st.session_state.labels_thresholds[selectedLabel] = st.number_input("Threshold", 0.0, 1.0, st.session_state.labels_thresholds[selectedLabel], 0.0001, format="%.4f")
 
             # dataframe of only text and selected label and simialrity
-            columns = ['text', selectedLabel, 'distance']
+            columns = ['text', 'matches', 'distance']
 
             data = []
             for i in range(len(st.session_state.data_strings)):
