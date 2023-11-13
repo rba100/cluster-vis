@@ -50,7 +50,8 @@ tab1, tab2, tab3 = st.tabs(["Configure", "Tabulate", "Tune"])
 with tab1:
     st.session_state.data_strings_raw = st.text_area("Enter your text items")
     st.session_state.labels_strings_raw = st.text_area("Enter your labels")
-    apply = st.button("Apply")
+    submitText = "Submit" if st.session_state.data_vectors is None else "Apply changes"
+    apply = st.button(submitText)
 
     st.subheader("Instructions")
     st.caption("Your labels will be sematically matched to the data. You can see how a label matches to the data by adjusting the threshold in the 'Tune' tab. The threshold is the minimum similarity between the label and the data for the label to be considered a match. If the ordering of the data doesn't match your expectations, re-write the label to be more specific (labels can be long-winded and descriptive).)")
@@ -71,7 +72,9 @@ with tab1:
 canRender = st.session_state.data_vectors is not None and st.session_state.labels_vectors is not None
 
 with tab2:
-    if (canRender):        
+    if (not canRender):        
+        st.text("Please enter data and labels in the 'Configure' tab and click 'Apply'")
+    else:
         columns = ['text']
         for i in range(len(st.session_state.labels_strings)):
             columns.append(st.session_state.labels_strings[i])
@@ -89,7 +92,9 @@ with tab2:
         st.dataframe(st.session_state.dataframe, hide_index=True)
 
 with tab3:
-    if(canRender):
+    if (not canRender):        
+        st.text("Please enter data and labels in the 'Configure' tab and click 'Apply'")
+    else:
         col1, col2 = st.columns(2)
         with col1:
             selectedLabel = st.selectbox("Select a label to tune", st.session_state.labels_strings)
