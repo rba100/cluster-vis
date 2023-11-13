@@ -60,6 +60,7 @@ col1, col2 = st.columns(2)
 with col1:
     inputText = st.text_area("Enter your text items, separated by newlines.")
     isGenerate = st.button("Generate Scatter Plot")
+    st.session_state.removeConceptText = st.text_input("Remove concept from data", help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
 
     with st.expander("Automatic cluster identification", expanded=False):
         detectClusters = st.checkbox("Detect clusters automatically", value=True)
@@ -68,7 +69,6 @@ with col1:
         else:
             n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=20, value=8, disabled=not detectClusters)
         st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters
-        st.session_state.removeConceptText = st.text_input("Remove concept from clustering", help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
         st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "Hierarchical"], help="Hierarchical clustering may better results for data with broad categories.")
 
     with st.expander("Filtering", expanded=False):
