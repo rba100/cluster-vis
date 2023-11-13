@@ -1,9 +1,5 @@
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.manifold import TSNE
-import plotly.graph_objects as go
-from gptclient import generate_cluster_name
-from adaclient import get_embeddings
 from vectordbclient import get_closest_words;
 
 def get_clusters(conn, embeddings, n_clusters=10):
@@ -22,7 +18,7 @@ def get_clusters(conn, embeddings, n_clusters=10):
     # Lookup nearest 5 words for each normalized cluster center
     labels = []
     for i, center in enumerate(cluster_centers):
-        closest_words = get_closest_words(center, cursor)
+        closest_words = get_closest_words(center, cursor, k=5)
         labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
 
     cursor.close()

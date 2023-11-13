@@ -1,4 +1,3 @@
-import psycopg2
 import openai
 import numpy as np
 
@@ -54,3 +53,15 @@ def get_embeddings(text_list, conn):
     conn.commit()
 
     return np.array(all_embeddings)
+
+def reflect_vector(normal, target):
+    # Reflects target across the plane orthogonal to normal
+    # Both vectors should be normalized and have the same dimension
+    return -target + 2 * np.dot(target, normal) * normal
+
+def getMidVector(v1, v2):
+    # Calculate the vector that is the sum of v1 and v2
+    sum_vector = v1 + v2
+    # Normalize the sum_vector to find the halfway vector
+    normalized_halfway_vector = sum_vector / np.linalg.norm(sum_vector)
+    return normalized_halfway_vector

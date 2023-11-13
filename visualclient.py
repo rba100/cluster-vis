@@ -1,4 +1,3 @@
-import psycopg2
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE

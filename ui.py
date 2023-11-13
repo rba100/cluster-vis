@@ -1,8 +1,8 @@
 import streamlit as st
-from adaclient import get_embeddings
+from vectorclient import get_embeddings, reflect_vector
 from gptclient import generate_cluster_name, generate_cluster_names_many
 from clusterclient import get_clusters
-from vectordbclient import get_closest_words, reflect_across_vector
+from vectordbclient import get_closest_words
 from visualclient import get_tsne_data, render_tsne_plotly
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -104,7 +104,7 @@ with col2:
         st.session_state.vectors = get_embeddings(string_list, conn)
         if(st.session_state.removeConceptText.strip() != ""):
             vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
-            st.session_state.vectors = np.apply_along_axis(reflect_across_vector, 1, st.session_state.vectors, vectorToRemove)
+            st.session_state.vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.vectors, vectorToRemove)
         st.session_state.labels, st.session_state.descriptions = get_clusters(conn, st.session_state.vectors, n_clusters)
         if(st.session_state.gptLabelling):
             tasks = []
