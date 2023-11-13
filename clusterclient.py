@@ -8,7 +8,7 @@ def get_clusters(conn, embeddings, n_clusters=10):
 
     # Perform clustering
     n_init = 10
-    kmeans = KMeans(n_clusters=n_clusters, n_init=n_init)
+    kmeans = KMeans(n_clusters=n_clusters, n_init=n_init, random_state=42)
     kmeans.fit(embeddings)
     cluster_centers = kmeans.cluster_centers_
 

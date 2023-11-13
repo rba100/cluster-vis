@@ -38,6 +38,9 @@ if 'filterMask' not in st.session_state:
 if 'removeConceptText' not in st.session_state:
     st.session_state.removeConceptText = ""
 
+if 'use3d' not in st.session_state:
+    st.session_state.use3d = False
+
 conn = psycopg2.connect(st.secrets["connectionString"])
 
 st.set_page_config(layout="wide")
@@ -85,6 +88,12 @@ with col1:
         st.caption("If you want to name the clusters, click the 'Use OpenAI to name clusters' checkbox and click the 'Generate Scatter Plot' button again. This adds a few seconds to the processing time. Note that you can click on the items in the legend to hide or show that category.")
         st.caption("'Remove concept from clustering'. If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
 
+    with st.expander("Experimental", expanded=False):
+        st.caption("You can try navigating the data in 3d, but it won't help you.")
+        st.session_state.use3d = st.checkbox("Use 3D plot", False)
+
+dimensions = 3 if st.session_state.use3d else 2
+
 with col2:
     if (isfilter):
         comparison_embedding = get_embeddings([st.session_state.comparison_text.strip()], conn)[0]
@@ -96,7 +105,7 @@ with col2:
         filtered_data = st.session_state.tsne_data[st.session_state.filterMask]
         filtered_labels = st.session_state.labels[st.session_state.filterMask]
         filtered_string_list = np.array(string_list)[st.session_state.filterMask]
-        fig = render_tsne_plotly(filtered_data, filtered_labels, filtered_string_list, st.session_state.descriptions)
+        fig = render_tsne_plotly(filtered_data, filtered_labels, filtered_string_list, st.session_state.descriptions, dimensions=dimensions)
         st.plotly_chart(fig)
         st.caption(f"Showing {len(filtered_data)} of {len(st.session_state.tsne_data)} items")
         
@@ -116,9 +125,12 @@ with col2:
             st.session_state.descriptions = generate_cluster_names_many(tasks)
             #st.session_state.descriptions[i] = (generate_cluster_name(label, samples))
 
-        st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters)
-        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions)
+        st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters, dimensions=dimensions)
+        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
         st.plotly_chart(fig)
     elif(st.session_state.tsne_data is not None and not isfilter):
-        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions)
+        tsneDim = st.session_state.tsne_data.shape[1]
+        if tsneDim != dimensions:
+            st.session_state.tsne_data, _ = get_tsne_data(st.session_state.vectors, n_clusters, dimensions=dimensions)
+        fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
         st.plotly_chart(fig)
