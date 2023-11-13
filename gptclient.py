@@ -4,6 +4,7 @@ import streamlit as st
 
 model = "gpt-3.5-turbo"
 
+@st.cache_data(max_entries=40)
 def generate_cluster_names_many(tasks):
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         # Submit all tasks and collect futures
@@ -14,7 +15,6 @@ def generate_cluster_names_many(tasks):
             results[task_index] = future.result()  # Place result in the correct order
     return results
 
-@st.cache_data(max_entries=40)
 def generate_cluster_name(labels, samples):
     if isinstance(labels, list):
         labels = ', '.join(labels)
@@ -26,12 +26,12 @@ Examine these samples of text:
 ```
 {nl.join(samples)}
 ```
-These have been matched against the labels: {labels}.
-Give a name for a master label that encompasses the labels are in the context of the samples (or a description of the common theme if the labels are unhelpful).
+These have been matched against the words: {labels}.
+Give a name for a master label that encompasses the words are in the context of the samples (or a description of the common theme if the words are unhelpful).
 """
 
     completion = openai.ChatCompletion.create(model=model,  temperature=0, messages=[
-        {"role":"system","content":"en-GB. You name categories. Reply only with one word (or a two word noun phrases if one word doesn't cut it)."},
+        {"role":"system","content":"en-GB. You name categories. Reply only with one word (or a short noun phrase if one word doesn't cut it)."},
         {"role": "user", "content": prompt}])
     content =  completion.choices[0].message.content.rstrip('.')
     content = content[0].upper() + content[1:]

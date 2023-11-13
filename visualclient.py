@@ -18,7 +18,7 @@ def get_tsne_data(embeddings, dimensions=2, random_state=42):
     return X_tsne
 
 @st.cache_data(max_entries=4)
-def render_tsne_plotly(xtsne, labels, lines, label_descriptions, dimensions=2):
+def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensions=2):
     if dimensions not in [2, 3, 4]:
         raise ValueError("dimensions must be 2 or 3, or... 4")
 
@@ -34,7 +34,7 @@ def render_tsne_plotly(xtsne, labels, lines, label_descriptions, dimensions=2):
     # Loop over the labels and add a scatter plot for each cluster
     for i, label_desc in enumerate(label_descriptions):
         # Extract the indices for the current label
-        indices = [j for j, x in enumerate(labels) if x == i]
+        indices = [j for j, x in enumerate(labelled_data) if x == i]
         # Define the color for the current label using the modulo operator to cycle through colors
         color = colors[i % len(colors)]
         # Add a trace for the current label
@@ -64,7 +64,7 @@ def render_tsne_plotly(xtsne, labels, lines, label_descriptions, dimensions=2):
                     mode="markers",
                     marker=dict(
                         size=10,
-                        color=color,  # use the discrete color for the current label
+                        color=color,
                         opacity=0.7
                     ),
                     customdata=np.array(lines)[indices],
@@ -74,11 +74,10 @@ def render_tsne_plotly(xtsne, labels, lines, label_descriptions, dimensions=2):
             )
 
     # Update layout and title
-    fig.update_layout(
-        title='t-SNE visualization',
+    fig.update_layout(        
         autosize=False,
         width=800,
-        height=800,
+        height=1000,
         margin=dict(l=50, r=50, b=100, t=100, pad=4),
         legend=dict(
             title='Cluster Descriptions',
@@ -96,7 +95,7 @@ def render_tsne_plotly(xtsne, labels, lines, label_descriptions, dimensions=2):
         )
     elif dimensions == 3:
         fig.update_layout(
-            scene=dict(
+            scene=dict(                
                 xaxis=dict(showticklabels=False),
                 yaxis=dict(showticklabels=False),
                 zaxis=dict(showticklabels=False)
