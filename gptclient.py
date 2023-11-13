@@ -30,7 +30,7 @@ These have been matched against the words: {labels}.
 Give a name for a master label that encompasses the words are in the context of the samples (or a description of the common theme if the words are unhelpful).
 """
 
-    completion = openai.ChatCompletion.create(model=model,  temperature=0, messages=[
+    completion = openai.chat.completions.create(model=model,  temperature=0, messages=[
         {"role":"system","content":"en-GB. You name categories. Reply only with one word (or a short noun phrase if one word doesn't cut it)."},
         {"role": "user", "content": prompt}])
     content =  completion.choices[0].message.content.rstrip('.')
@@ -48,7 +48,7 @@ This is a text analysis. Common words in a corpus have been identified by vector
 Reply with exactly {len(text_array)} lines. On each line, name the cluster based on the general theme of the words in the list. If they are wildly different or opposite, you can use `/` to seperate. E.g. "yes,no,not,none,yeah" => "yes/no", but try to avoid this and just describe the theme in one or two words.
 """
 
-    completion = openai.ChatCompletion.create(model=model, messages=[{"role": "user", "content": prompt}])
+    completion = openai.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}])
     lines = completion.choices[0].message.content.split("\n")
     if(len(lines) != len(text_array)):
         raise Exception("Number of lines returned does not match number of clusters")

@@ -26,7 +26,7 @@ def get_embeddings(text_list, conn):
         # Fetch embeddings for uncached items
         if uncached_texts:
             try:
-                result = openai.Embedding.create(model='text-embedding-ada-002', input=uncached_texts)
+                result = openai.embeddings.create(model='text-embedding-ada-002', input=uncached_texts)
             except Exception as e:
                 print(uncached_texts)
                 raise e
