@@ -28,10 +28,9 @@ def get_embeddings(text_list, conn):
             try:
                 result = openai.embeddings.create(model='text-embedding-ada-002', input=uncached_texts)
             except Exception as e:
-                print(uncached_texts)
                 raise e
                         
-            uncached_embeddings = [item['embedding'] for item in result['data']]
+            uncached_embeddings = [item.embedding for item in result.data]
 
             # Store the new embeddings in the database for future use
             for text, embedding in zip(uncached_texts, uncached_embeddings):
