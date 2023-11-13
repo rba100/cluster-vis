@@ -80,9 +80,8 @@ with tab3:
             selectedLabel = st.selectbox("Select a label to tune", st.session_state.labels_strings)
         if(selectedLabel):
             with col2:
-                    st.session_state.labels_thresholds[selectedLabel] = st.number_input("Threshold", 0.0, 1.0, st.session_state.labels_thresholds[selectedLabel], 0.0001, format="%.4f")
+                st.session_state.labels_thresholds[selectedLabel] = st.number_input("Threshold", 0.0, 1.0, st.session_state.labels_thresholds[selectedLabel], 0.0001, format="%.4f")
 
-            # dataframe of only text and selected label and simialrity
             columns = ['text', 'matches', 'distance']
 
             data = []
