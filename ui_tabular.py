@@ -71,26 +71,6 @@ with tab1:
 
 canRender = st.session_state.data_vectors is not None and st.session_state.labels_vectors is not None
 
-with tab2:
-    if (not canRender):        
-        st.text("Please enter data and labels in the 'Configure' tab and click 'Apply'")
-    else:
-        columns = ['text']
-        for i in range(len(st.session_state.labels_strings)):
-            columns.append(st.session_state.labels_strings[i])
-
-        data = []
-        for i in range(len(st.session_state.data_strings)):
-            row = [st.session_state.data_strings[i]]
-            for j in range(len(st.session_state.labels_strings)):
-                similarityMatch = st.session_state.similarity[i][j] > 1 - st.session_state.labels_thresholds[st.session_state.labels_strings[j]]
-                cellValue = '✓' if similarityMatch else ''
-                row.append(cellValue)
-            data.append(row)
-        st.session_state.dataframe = pd.DataFrame(data, columns=columns)
-
-        st.dataframe(st.session_state.dataframe, hide_index=True)
-
 with tab3:
     if (not canRender):        
         st.text("Please enter data and labels in the 'Configure' tab and click 'Apply'")
@@ -115,3 +95,22 @@ with tab3:
             dataframe = dataframe.sort_values(by=['distance'], ascending=True)
             st.dataframe(dataframe, hide_index=True, height=1000, column_config={'difference' : st.column_config.NumberColumn(format="%.4f")})
        
+with tab2:
+    if (not canRender):        
+        st.text("Please enter data and labels in the 'Configure' tab and click 'Apply'")
+    else:
+        columns = ['text']
+        for i in range(len(st.session_state.labels_strings)):
+            columns.append(st.session_state.labels_strings[i])
+
+        data = []
+        for i in range(len(st.session_state.data_strings)):
+            row = [st.session_state.data_strings[i]]
+            for j in range(len(st.session_state.labels_strings)):
+                similarityMatch = st.session_state.similarity[i][j] > 1 - st.session_state.labels_thresholds[st.session_state.labels_strings[j]]
+                cellValue = '✓' if similarityMatch else ''
+                row.append(cellValue)
+            data.append(row)
+        st.session_state.dataframe = pd.DataFrame(data, columns=columns)
+
+        st.dataframe(st.session_state.dataframe, hide_index=True)
