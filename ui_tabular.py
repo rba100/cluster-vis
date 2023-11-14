@@ -1,5 +1,5 @@
 import streamlit as st
-from vectorclient import get_embeddings, reflect_vector
+from vectorclient import get_embeddings, get_embeddings_exp, getFieldName
 from gptclient import generate_cluster_names_many
 from clusterclient import get_clusters, get_clusters_h
 from vectordbclient import get_closest_words
@@ -54,14 +54,16 @@ with tab1:
 
     st.subheader("Instructions")
     st.caption("Your labels will be sematically matched to the data. You can see how a label matches to the data by adjusting the threshold in the 'Tune' tab. The threshold is the minimum similarity between the label and the data for the label to be considered a match. If the ordering of the data doesn't match your expectations, re-write the label to be more specific (labels can be long-winded and descriptive).)")
+    st.subheader("Composite labels")
+    st.caption("labels can be made up of multiple components. Any label starting with a '!' will be treated a composite label. This example should illustrate the format: \"!my special field['term 1', 'term 2', 'term 3']\". The field name does not contribute to the actual embedding vector and is just a name for UI purposes. The rest should be a JSON array of strings that will equally contribute to the label.")
 
     if apply:
         data_strings = st.session_state.data_strings_raw.split("\n")
         labels_strings = st.session_state.labels_strings_raw.split("\n")
         st.session_state.data_strings = [x.strip() for x in data_strings if x.strip()]
-        st.session_state.labels_strings = [x.strip() for x in labels_strings if x.strip()]
         st.session_state.data_vectors = get_embeddings(st.session_state.data_strings, conn)
-        st.session_state.labels_vectors = get_embeddings(st.session_state.labels_strings, conn)
+        st.session_state.labels_strings = list(map(getFieldName, [x.strip() for x in labels_strings if x.strip()]))
+        st.session_state.labels_vectors = get_embeddings_exp(labels_strings, conn)
         st.session_state.similarity = cosine_similarity(st.session_state.data_vectors, st.session_state.labels_vectors)
         for label in st.session_state.labels_strings:
             if not label in st.session_state.labels_thresholds:

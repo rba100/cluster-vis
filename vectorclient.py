@@ -1,6 +1,7 @@
 import openai
 import numpy as np
 import streamlit as st
+import json
 
 @st.cache_data(max_entries=500)
 def get_embeddings(text_list, _conn):
@@ -66,3 +67,38 @@ def getMidVector(v1, v2):
     # Normalize the sum_vector to find the halfway vector
     normalized_halfway_vector = sum_vector / np.linalg.norm(sum_vector)
     return normalized_halfway_vector
+
+st.cache_data(max_entries=5)
+def get_embeddings_exp(items, _conn):
+    non_composites = [item for item in items if not item.startswith('!')]
+    non_composite_vectors = get_embeddings(non_composites, _conn) if non_composites else []
+    non_composite_iter = iter(non_composite_vectors)
+    vectors = [getCompositeVector(item, _conn) if item.startswith('!') else next(non_composite_iter) for item in items]
+    
+    return vectors
+
+# expressionString must be a string
+st.cache_data(max_entries=5)
+
+def getCompositeVector(expressionString: str, _conn):
+    if(len(expressionString) < 1):
+        raise Exception("Expression string must be at least one character long")
+    if(expressionString[0] != '!'):
+        raise Exception("Expression string must start with !")
+    
+    openBraceIndex = expressionString.find('[')
+    fieldName = expressionString[1:openBraceIndex].strip()
+    terms = json.loads(expressionString[openBraceIndex:])
+    # assert is an array
+    if not isinstance(terms, list):
+        raise Exception("Expression string must include an array of strings")
+    vectors = get_embeddings(terms, _conn)
+    return np.mean(vectors, axis=0)
+
+def getFieldName(input: str):
+    if(len(input) < 2 or input[0] != '!'):
+        return input    
+    openBraceIndex = input.find('[')
+    if openBraceIndex == -1:
+        return input
+    return input[1:openBraceIndex].strip()
