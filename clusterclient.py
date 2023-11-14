@@ -3,10 +3,12 @@ from sklearn.cluster import KMeans
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.pairwise import cosine_similarity
 from vectordbclient import get_closest_words;
+import streamlit as st
 
-def get_clusters(conn, embeddings, n_clusters=10, random_state=42):
+@st.cache_data(max_entries=100)
+def get_clusters(_conn, embeddings, n_clusters=10, random_state=42):
     # Connect to the database
-    cursor = conn.cursor()
+    cursor = _conn.cursor()
 
     # Perform clustering
     n_init = 10
@@ -27,9 +29,10 @@ def get_clusters(conn, embeddings, n_clusters=10, random_state=42):
 
     return kmeans.labels_, labels
 
-def get_clusters_h(conn, embeddings, n_clusters=10, random_state=0):
+@st.cache_data(max_entries=100)
+def get_clusters_h(_conn, embeddings, n_clusters=10, random_state=0):
     # Connect to the database
-    cursor = conn.cursor()
+    cursor = _conn.cursor()
 
     # Create a hierarchical clustering model with the specified number of clusters.
     # The 'affinity' is set to cosine to use cosine similarity as the distance metric.

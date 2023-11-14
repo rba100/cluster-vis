@@ -1,4 +1,7 @@
-def get_closest_words(embedding, cursor, preferCommonWords=True, k=5):
+import streamlit as st
+
+@st.cache_data(max_entries=500)
+def get_closest_words(embedding, _cursor, preferCommonWords=True, k=5):
     embedding_str = ','.join(map(str, embedding))
     embedding_str = f'[{embedding_str}]'
     query = f"""
@@ -30,8 +33,8 @@ ORDER BY embedding <=> %s
 LIMIT {k};
 """
     if(preferCommonWords):
-        cursor.execute(query, (embedding_str,embedding_str))
+        _cursor.execute(query, (embedding_str,embedding_str))
     else:
-        cursor.execute(queryAll, (embedding_str,))
-    results = cursor.fetchall()[:k]
+        _cursor.execute(queryAll, (embedding_str,))
+    results = _cursor.fetchall()[:k]
     return [result[0] for result in results]

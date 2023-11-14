@@ -1,13 +1,15 @@
 import openai
 import numpy as np
+import streamlit as st
 
-def get_embeddings(text_list, conn):
+@st.cache_data(max_entries=500)
+def get_embeddings(text_list, _conn):
     batch_size = 500
     all_embeddings = []
     embeddings_dict = {}
     
     # Create a cursor object to interact with the database
-    cursor = conn.cursor()
+    cursor = _conn.cursor()
 
     # De-dupe the text_list
     text_list_deduped = list(set(text_list))
@@ -49,7 +51,7 @@ def get_embeddings(text_list, conn):
 
     # Close the cursor
     cursor.close()
-    conn.commit()
+    _conn.commit()
 
     return np.array(all_embeddings)
 
