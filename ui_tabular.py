@@ -39,7 +39,6 @@ if 'similarity' not in st.session_state:
 
 st.set_page_config(layout="wide")
 
-@st.cache_resource
 def connectToDb():
     return psycopg2.connect(st.secrets["connectionString"])
 
@@ -113,3 +112,5 @@ with tab2:
         st.session_state.dataframe = pd.DataFrame(data, columns=columns)
 
         st.dataframe(st.session_state.dataframe, hide_index=True)
+
+conn.close()

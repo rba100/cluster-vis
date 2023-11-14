@@ -49,7 +49,6 @@ if 'clusteringAlgorithm' not in st.session_state:
 
 st.set_page_config(layout="wide")
 
-@st.cache_resource
 def connectToDb():
     return psycopg2.connect(st.secrets["connectionString"])
 
@@ -146,3 +145,5 @@ with col2:
             st.session_state.tsne_data = get_tsne_data(st.session_state.vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
         fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
         st.plotly_chart(fig)
+
+conn.close()
