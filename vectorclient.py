@@ -100,10 +100,11 @@ def getCompositeVector(expressionString: str, _conn):
     elif all(isinstance(item, int) or isinstance(item, float) for item in terms):
         if(len(terms) != 1536):
             raise Exception("Expression vector must have 1536 dimensions")
-        vectors = [np.array(terms)]
+        return [np.array(terms)]
     else:
         raise Exception("Expression string must include an array of strings or numbers")
-    return np.mean(vectors, axis=0)
+    mean = np.mean(vectors, axis=0)
+    return mean / np.linalg.norm(mean)
 
 def getFieldName(input: str):
     if(len(input) < 2 or input[0] != '!'):

@@ -7,6 +7,7 @@ from visualclient import get_tsne_data, render_tsne_plotly
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import psycopg2
+import json
 
 if 'tsne_data' not in st.session_state:
     st.session_state.tsne_data = None
@@ -106,8 +107,8 @@ with col1:
         st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
         st.session_state.use3d = st.checkbox("Use 3D plot", False)
         if(st.session_state.centroids is not None and st.button("Show cluster vectors")):
-            outputDict = {desc: st.session_state.centroids[i] for i, desc in enumerate(st.session_state.descriptions)}
-            st.write(outputDict)
+            expressions = [f"!{desc} {json.dumps(list(st.session_state.centroids[i]))}" for i, desc in enumerate(st.session_state.descriptions)]
+            st.text_area("Cluster vectors", "\n".join(expressions))
 
 dimensions = 3 if st.session_state.use3d else 2
 
