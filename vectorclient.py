@@ -91,8 +91,18 @@ def getCompositeVector(expressionString: str, _conn):
     terms = json.loads(expressionString[openBraceIndex:])
     # assert is an array
     if not isinstance(terms, list):
-        raise Exception("Expression string must include an array of strings")
-    vectors = get_embeddings(terms, _conn)
+        raise Exception("Expression string must end with a JSON array")
+    
+    # if list items are strings
+    if all(isinstance(item, str) for item in terms):
+        vectors = get_embeddings(terms, _conn)
+    # else if the list items are numbers that can be cast to floats
+    elif all(isinstance(item, int) or isinstance(item, float) for item in terms):
+        if(len(terms) != 1536):
+            raise Exception("Expression vector must have 1536 dimensions")
+        vectors = [np.array(terms)]
+    else:
+        raise Exception("Expression string must include an array of strings or numbers")
     return np.mean(vectors, axis=0)
 
 def getFieldName(input: str):

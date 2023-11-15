@@ -41,11 +41,13 @@ def name_clusters_array(text_array):
 
     text = "\n".join(text_array)
     prompt = f"""
-This is a text analysis. Common words in a corpus have been identified by vector similarity search. The words may seem fairly random as they are selected by vector similarity, not by frequency. The context of this request is the coding of market research survey free text responses.
+User
+This is a text analysis. Common words in a corpus have been identified by vector similarity search.
+Give a list of themes that a market researching could look for in responses. Ignore terms that are clearly not helpful like 'none' or 'thanks'.
 ```
 {text}
 ```
-Reply with exactly {len(text_array)} lines. On each line, name the cluster based on the general theme of the words in the list. If they are wildly different or opposite, you can use `/` to seperate. E.g. "yes,no,not,none,yeah" => "yes/no", but try to avoid this and just describe the theme in one or two words.
+reply with a list of themes, one for each cluster. Do not write anything else, just write one theme per line of text returned. Write only the headline of the theme, do not write any description or explanation. If you are not sure what to write for a given input, return the original string for that theme.
 """
 
     completion = openai.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}])

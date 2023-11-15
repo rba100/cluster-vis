@@ -1,7 +1,7 @@
 import streamlit as st
 from vectorclient import get_embeddings, reflect_vector
-from gptclient import generate_cluster_names_many
-from clusterclient import get_clusters, get_clusters_h
+from gptclient import generate_cluster_names_many, name_clusters_array
+from clusterclient import get_clusters
 from vectordbclient import get_closest_words
 from visualclient import get_tsne_data, render_tsne_plotly
 from sklearn.metrics.pairwise import cosine_similarity
@@ -19,6 +19,9 @@ if 'labels' not in st.session_state:
 
 if 'descriptions' not in st.session_state:
     st.session_state.descriptions = None
+
+if 'centroids' not in st.session_state:
+    st.session_state.centroids = None
 
 if 'similarity_threshold' not in st.session_state:
     st.session_state.similarity_threshold = 0.18
@@ -63,12 +66,16 @@ with col1:
 
     with st.expander("Automatic cluster identification", expanded=False):
         detectClusters = st.checkbox("Detect clusters automatically", value=True)
-        if(not detectClusters):
+        st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "Hierarchical", "Hierarchical (Threshold)"], help="Hierarchical clustering may better results for data with broad categories. With a threshold, the algorithm choosing the number of clusters for you (tweakable via merging threshold slider).")
+        if(not detectClusters or st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
             n_clusters = 1
         else:
             n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=20, value=8, disabled=not detectClusters)
-        st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters
-        st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "Hierarchical"], help="Hierarchical clustering may better results for data with broad categories.")
+        if(st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
+            distance_threshold = st.slider("Distance threshold", 0.0, 1.0, 0.31, 0.01, help="Increasing this makes items less likely to be merged, resulting in more clusters.")
+            n_clusters = 1
+        else: distance_threshold = None
+        st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters        
 
     with st.expander("Filtering", expanded=False):
         filterChoice = st.selectbox("Filter type", ["Filter out", "Show filtered"], help="Show only (or filter out) items that are semantically similar to this text. This is useful if you want to focus on a particular theme or hide noise. Tip: a full stop '.' tends to match poor quality answers before good ones.")
@@ -98,6 +105,9 @@ with col1:
         st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
         st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
         st.session_state.use3d = st.checkbox("Use 3D plot", False)
+        if(st.session_state.centroids is not None and st.button("Show cluster vectors")):
+            outputDict = {desc: st.session_state.centroids[i] for i, desc in enumerate(st.session_state.descriptions)}
+            st.write(outputDict)
 
 dimensions = 3 if st.session_state.use3d else 2
 
@@ -116,18 +126,22 @@ with col2:
         fig = render_tsne_plotly(filtered_data, filtered_labels, filtered_string_list, st.session_state.descriptions, dimensions=dimensions)
         st.plotly_chart(fig)
         st.caption(f"Showing {len(filtered_data)} of {len(st.session_state.tsne_data)} items")
-        
+
     if (isGenerate):
         st.session_state.vectors = get_embeddings(string_list, conn)
         if(st.session_state.removeConceptText.strip() != ""):
             vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
             st.session_state.vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.vectors, vectorToRemove)
-        if (st.session_state.clusteringAlgorithm == "KMeans"):
-            clusterFunc = get_clusters
-        else:
-            clusterFunc = get_clusters_h
-        st.session_state.labels, st.session_state.descriptions = clusterFunc(conn, st.session_state.vectors, n_clusters, random_state=st.session_state.randomSeed)
-        if(st.session_state.gptLabelling and n_clusters > 1):
+        labels, descriptions, centroids = get_clusters(conn,
+                                                       st.session_state.clusteringAlgorithm,
+                                                       st.session_state.vectors,
+                                                       n_clusters= n_clusters,
+                                                       random_state=st.session_state.randomSeed,
+                                                       distance_threshold=distance_threshold)
+        st.session_state.labels = labels
+        st.session_state.descriptions = descriptions
+        st.session_state.centroids = centroids
+        if(st.session_state.gptLabelling and len(st.session_state.descriptions) > 0 and len(st.session_state.descriptions) < 25):
             tasks = []
             for(i, label) in enumerate(st.session_state.descriptions):
                 samples = np.array(string_list)[st.session_state.labels == i]
