@@ -5,7 +5,7 @@ import json
 
 @st.cache_data(max_entries=4)
 def get_embeddings(lines, _conn):
-    text_list_truncated = [line[:3000] for line in lines]
+    text_list_truncated = lines
     batch_size = 200
     all_embeddings = []
     embeddings_dict = {}
