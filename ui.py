@@ -136,7 +136,7 @@ with col2:
         labels, descriptions, centroids = get_clusters(conn,
                                                        st.session_state.clusteringAlgorithm,
                                                        st.session_state.vectors,
-                                                       n_clusters= n_clusters,
+                                                       n_clusters=n_clusters,
                                                        random_state=st.session_state.randomSeed,
                                                        distance_threshold=distance_threshold)
         st.session_state.labels = labels
