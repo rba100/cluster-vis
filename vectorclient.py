@@ -14,6 +14,9 @@ def get_embeddings(text_list, _conn):
 
     # De-dupe the text_list
     text_list_deduped = list(set(text_list))
+    
+    # truncate lines to no max 1000 chars
+    text_list_deduped = [text[:1000] for text in text_list_deduped]
 
     for i in range(0, len(text_list_deduped), batch_size):
         batch = text_list_deduped[i:i + batch_size]
