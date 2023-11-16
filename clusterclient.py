@@ -17,7 +17,7 @@ def get_clusters(_conn, algorithm, vectors, n_clusters, random_state=None, dista
         labels, descriptions, centroids = func()
         return labels, descriptions, centroids
 
-@st.cache_data(max_entries=100)
+@st.cache_data(max_entries=4)
 def get_clusters_kmeans(_conn, embeddings, n_clusters=10, random_state=42):
     # Connect to the database
     cursor = _conn.cursor()
@@ -41,7 +41,7 @@ def get_clusters_kmeans(_conn, embeddings, n_clusters=10, random_state=42):
 
     return kmeans.labels_, labels, cluster_centers
 
-@st.cache_data(max_entries=100)
+@st.cache_data(max_entries=4)
 def get_clusters_h(_conn, embeddings, n_clusters=10):
     # Connect to the database
     cursor = _conn.cursor()
@@ -70,7 +70,7 @@ def get_clusters_h(_conn, embeddings, n_clusters=10):
 
     return clustering.labels_, labels, cluster_centers
 
-@st.cache_data(max_entries=100)
+@st.cache_data(max_entries=4)
 def get_clusters_h_threshold(_conn, embeddings, distance_threshold=0.5):
     # Connect to the database
     cursor = _conn.cursor()

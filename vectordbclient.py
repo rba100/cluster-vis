@@ -1,6 +1,6 @@
 import streamlit as st
 
-@st.cache_data(max_entries=500)
+@st.cache_data(max_entries=50)
 def get_closest_words(embedding, _cursor, preferCommonWords=True, k=5):
     embedding_str = ','.join(map(str, embedding))
     embedding_str = f'[{embedding_str}]'
