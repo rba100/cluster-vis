@@ -9,7 +9,7 @@ import streamlit as st
 def get_tsne_data(embeddings, dimensions=2, random_state=42):
 
     # Perform t-SNE dimensionality reduction
-    perplexity = min(25, len(embeddings) - 1)
+    perplexity = max(1,min(25, len(embeddings) - 1))
     learning_rate = max(1, min(200, len(embeddings) // 10))
 
     tsne = TSNE(n_components=dimensions, perplexity=perplexity, metric="cosine", learning_rate=learning_rate, random_state=random_state)

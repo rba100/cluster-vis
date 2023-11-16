@@ -87,7 +87,7 @@ with col1:
         st.session_state.lastfilterOut = filterOut
         similarity_changed = similarity_threshold != st.session_state.similarity_threshold
         st.session_state.similarity_threshold = similarity_threshold
-        string_list = inputText.strip().split('\n')
+        string_list = [s for s in inputText.strip().split('\n') if s.strip()]
         isfilter = (st.button("Apply filter") or similarity_changed or filterOutChanged) \
             and st.session_state.comparison_text.strip() != "" \
             and st.session_state.tsne_data is not None

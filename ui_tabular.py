@@ -63,11 +63,11 @@ with tab1:
         st.session_state.data_strings = [x.strip() for x in data_strings if x.strip()]
         st.session_state.data_vectors = get_embeddings(st.session_state.data_strings, conn)
         st.session_state.labels_strings = list(map(getFieldName, [x.strip() for x in labels_strings if x.strip()]))
-        st.session_state.labels_vectors = get_embeddings_exp(labels_strings, conn)
-        st.session_state.similarity = cosine_similarity(st.session_state.data_vectors, st.session_state.labels_vectors)
         for label in st.session_state.labels_strings:
             if not label in st.session_state.labels_thresholds:
                 st.session_state.labels_thresholds[label] = 0.18
+        st.session_state.labels_vectors = get_embeddings_exp(labels_strings, conn)
+        st.session_state.similarity = cosine_similarity(st.session_state.data_vectors, st.session_state.labels_vectors)
         st.session_state.dataframe = None
 
 canRender = st.session_state.data_vectors is not None and st.session_state.labels_vectors is not None
