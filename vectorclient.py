@@ -4,7 +4,8 @@ import streamlit as st
 import json
 
 @st.cache_data(max_entries=500)
-def get_embeddings(text_list, _conn):
+def get_embeddings(lines, _conn):
+    text_list_truncated = [line[:3000] for line in lines]
     batch_size = 500
     all_embeddings = []
     embeddings_dict = {}
@@ -13,10 +14,7 @@ def get_embeddings(text_list, _conn):
     cursor = _conn.cursor()
 
     # De-dupe the text_list
-    text_list_deduped = list(set(text_list))
-    
-    # truncate lines to no max 1000 chars
-    text_list_deduped = [text[:1000] for text in text_list_deduped]
+    text_list_deduped = list(set(text_list_truncated))
 
     for i in range(0, len(text_list_deduped), batch_size):
         batch = text_list_deduped[i:i + batch_size]
@@ -51,7 +49,7 @@ def get_embeddings(text_list, _conn):
         embeddings_dict.update({text: list(map(float, cached_dict[text][1:-1].split(','))) for text in batch if text in cached_dict})
 
     # Map the original text_list into the dictionary to get embeddings in order
-    all_embeddings = [embeddings_dict[text] for text in text_list]
+    all_embeddings = [embeddings_dict[text] for text in text_list_truncated]
 
     # Close the cursor
     cursor.close()
