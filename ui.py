@@ -67,7 +67,7 @@ with col1:
 
     with st.expander("Automatic cluster identification", expanded=False):
         detectClusters = st.checkbox("Detect clusters automatically", value=True)
-        st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "Hierarchical", "Hierarchical (Threshold)"], help="Hierarchical clustering may better results for data with broad categories. With a threshold, the algorithm choosing the number of clusters for you (tweakable via merging threshold slider).")
+        st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "Hierarchical", "Hierarchical (Threshold)"], help="Hierarchical clustering may better results for data with broad categories. With a threshold, the algorithm chooses the number of clusters for you (tweakable via merging threshold slider).")
         if(not detectClusters or st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
             n_clusters = 1
         else:
@@ -107,7 +107,13 @@ with col1:
         st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
         st.session_state.use3d = st.checkbox("Use 3D plot", False)
         if(st.session_state.centroids is not None and st.button("Show cluster vectors")):
-            expressions = [f"!{desc} {json.dumps(list(st.session_state.centroids[i]))}" for i, desc in enumerate(st.session_state.descriptions)]
+            descs = []
+            for i, desc in enumerate(st.session_state.descriptions):
+                if desc in descs:
+                    descs.append(f"{desc} ({i})")
+                else:
+                    descs.append(desc)
+            expressions = [f"!{desc} {json.dumps(list(st.session_state.centroids[i]))}" for i, desc in enumerate(descs)]
             st.text_area("Cluster vectors", "\n".join(expressions))
 
 dimensions = 3 if st.session_state.use3d else 2
