@@ -92,7 +92,7 @@ def getCompositeVector(expressionString: str, _conn):
     # assert is an array
     if not isinstance(terms, list):
         raise Exception("Expression string must end with a JSON array")
-    
+
     # if list items are strings
     if all(isinstance(item, str) for item in terms):
         vectors = get_embeddings(terms, _conn)
@@ -100,7 +100,7 @@ def getCompositeVector(expressionString: str, _conn):
     elif all(isinstance(item, int) or isinstance(item, float) for item in terms):
         if(len(terms) != 1536):
             raise Exception("Expression vector must have 1536 dimensions")
-        return [np.array(terms)]
+        return list(np.array(terms))
     else:
         raise Exception("Expression string must include an array of strings or numbers")
     mean = np.mean(vectors, axis=0)
