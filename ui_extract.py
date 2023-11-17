@@ -140,7 +140,7 @@ def main():
             filtered_labels = st.session_state.labels[st.session_state.filterMask]
             filtered_string_list = np.array(string_list)[st.session_state.filterMask]
             fig = render_tsne_plotly(filtered_data, filtered_labels, filtered_string_list, st.session_state.descriptions, dimensions=dimensions)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
             st.caption(f"Showing {len(filtered_data)} of {len(st.session_state.tsne_data)} items")
 
         if (isGenerate):
@@ -168,7 +168,7 @@ def main():
 
             st.session_state.tsne_data = get_tsne_data(st.session_state.vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
             fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
         elif(st.session_state.tsne_data is not None and not isfilter):
             tsneDim = st.session_state.tsne_data.shape[1]
             if tsneDim != dimensions:
