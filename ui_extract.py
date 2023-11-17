@@ -71,11 +71,11 @@ def main():
 
         with st.expander("Automatic cluster identification", expanded=False):
             detectClusters = st.checkbox("Detect clusters automatically", value=True)
-            st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "Hierarchical", "Hierarchical (Threshold)"], help="Hierarchical clustering may better results for data with broad categories. With a threshold, the algorithm chooses the number of clusters for you (tweakable via merging threshold slider).")
+            st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "Hierarchical", "Hierarchical (Threshold)"], help="Hierarchical clustering is slower but may better results. With a threshold, the algorithm chooses the number of clusters for you (tweakable via merging threshold slider).")
             if(not detectClusters or st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
                 n_clusters = 1
             else:
-                n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=20, value=8, disabled=not detectClusters)
+                n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=40, value=8, disabled=not detectClusters)
             if(st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
                 distance_threshold = st.slider("Distance threshold", 0.0, 1.0, 0.31, 0.01, help="Increasing this makes items less likely to be merged, resulting in more clusters.")
                 n_clusters = 1

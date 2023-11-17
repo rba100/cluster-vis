@@ -2,24 +2,34 @@ import openai
 import numpy as np
 import streamlit as st
 import json
+import hashlib
+
+debug = True
+
+def md5_hash(text):
+    # Return MD5 hash of the given text
+    return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 @st.cache_data(max_entries=4)
 def get_embeddings(lines, _conn):
-    text_list_truncated = lines
-    batch_size = 200
+    #hashed_lines = [md5_hash(line) for line in lines]
+    batch_size = 500
     all_embeddings = []
     embeddings_dict = {}
-    
+    if debug:
+        print("get_embeddings: " + str(len(lines)))
     # Create a cursor object to interact with the database
     cursor = _conn.cursor()
 
     # De-dupe the text_list
-    text_list_deduped = list(set(text_list_truncated))
+    text_list_deduped = list(set(lines))
 
     for i in range(0, len(text_list_deduped), batch_size):
         batch = text_list_deduped[i:i + batch_size]
 
         query = "SELECT input, embedding FROM ada_cache WHERE input = ANY(%s)"
+        if debug:
+            print("checking cache")
         cursor.execute(query, (batch,))
         cached_results = cursor.fetchall()
 
@@ -27,9 +37,14 @@ def get_embeddings(lines, _conn):
         cached_dict = {item[0]: item[1] for item in cached_results}
         uncached_texts = [text for text in batch if text not in cached_dict]
 
+        if debug:
+            print("uncached: " + str(len(uncached_texts)))
+
         # Fetch embeddings for uncached items
         if uncached_texts:
             try:
+                if debug:
+                    print("calling openai")
                 result = openai.embeddings.create(model='text-embedding-ada-002', input=uncached_texts)
             except Exception as e:
                 raise e
@@ -37,11 +52,24 @@ def get_embeddings(lines, _conn):
             uncached_embeddings = [item.embedding for item in result.data]
 
             # Store the new embeddings in the database for future use
-            for text, embedding in zip(uncached_texts, uncached_embeddings):
-                embedding_str = ','.join(map(str, embedding))
-                embedding_str = f'[{embedding_str}]'
-                #cursor.execute("INSERT INTO ada_cache (input, embedding) VALUES (%s, %s)", (text, embedding_str))
-                cursor.execute("INSERT INTO ada_cache (input, embedding) VALUES (%s, %s) ON CONFLICT DO NOTHING", (text, embedding_str))                
+            if debug:
+                    print("inserting into cache")
+
+            records_to_insert = [
+                (text, f'[{",".join(map(str, embedding))}]')
+                for text, embedding in zip(uncached_texts, uncached_embeddings)
+            ]
+
+            # Prepare your INSERT statement. This can be modified based on your specific needs.
+            insert_query = """
+            INSERT INTO ada_cache (input, embedding)
+            VALUES (%s, %s)
+            ON CONFLICT DO NOTHING
+            """
+
+            # Execute the batch insertion
+            cursor.executemany(insert_query, records_to_insert)
+            _conn.commit()  # Make sure to commit the transaction to save changes to the database               
 
             embeddings_dict.update({text: embedding for text, embedding in zip(uncached_texts, uncached_embeddings)})
 
@@ -49,11 +77,14 @@ def get_embeddings(lines, _conn):
         embeddings_dict.update({text: list(map(float, cached_dict[text][1:-1].split(','))) for text in batch if text in cached_dict})
 
     # Map the original text_list into the dictionary to get embeddings in order
-    all_embeddings = [embeddings_dict[text] for text in text_list_truncated]
+    all_embeddings = [embeddings_dict[text] for text in lines]
 
     # Close the cursor
     cursor.close()
     _conn.commit()
+
+    if debug:
+        print("returning embeddings")
 
     return np.array(all_embeddings)
 
