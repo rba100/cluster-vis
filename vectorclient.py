@@ -10,7 +10,7 @@ def md5_hash(text):
     # Return MD5 hash of the given text
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
-#@st.cache_data(max_entries=4)
+@st.cache_data(max_entries=4)
 def get_embeddings(lines, _conn):
     if debug:
         print("get_embeddings: " + str(len(lines)))
