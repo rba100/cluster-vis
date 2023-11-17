@@ -67,7 +67,7 @@ def main():
         st.session_state.data_strings_raw = st.text_area("Enter your text items, separated by newlines.", value=st.session_state.data_strings_raw)
         inputText = st.session_state.data_strings_raw 
         isGenerate = st.button("Generate Scatter Plot")
-        st.session_state.removeConceptText = st.text_input("Remove concept from data", help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
+        st.session_state.removeConceptText = st.text_input("Remove concept from data", value=st.session_state.removeConceptText, help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
 
         with st.expander("Automatic cluster identification", expanded=False):
             detectClusters = st.checkbox("Detect clusters automatically", value=True)
@@ -110,7 +110,9 @@ def main():
             st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
             st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
             st.session_state.use3d = st.checkbox("Use 3D plot", False)
-            if(st.session_state.centroids is not None and st.button("Show cluster vectors")):
+            showVectors = st.button("Show centroids")
+            importToClassify = st.button("Import to classify")
+            if(st.session_state.centroids is not None and (showVectors or importToClassify)):
                 descs = []
                 for i, desc in enumerate(st.session_state.descriptions):
                     if desc in descs:
@@ -118,7 +120,10 @@ def main():
                     else:
                         descs.append(desc)
                 expressions = [f"!{desc} {json.dumps(list(st.session_state.centroids[i]))}" for i, desc in enumerate(descs)]
-                st.text_area("Cluster vectors", "\n".join(expressions))
+                if showVectors:
+                    st.text_area("Centroid vectors", "\n".join(expressions))
+                if importToClassify:
+                    st.session_state.labels_strings_raw = "\n".join(expressions)
 
     dimensions = 3 if st.session_state.use3d else 2
 
