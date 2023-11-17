@@ -66,8 +66,8 @@ def main():
     with col1:
         st.session_state.data_strings_raw = st.text_area("Enter your text items, separated by newlines.", value=st.session_state.data_strings_raw)
         inputText = st.session_state.data_strings_raw 
-        isGenerate = st.button("Generate Scatter Plot")
         st.session_state.removeConceptText = st.text_input("Remove concept from data", value=st.session_state.removeConceptText, help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
+        isGenerate = st.button("Generate Scatter Plot")
 
         with st.expander("Automatic cluster identification", expanded=False):
             detectClusters = st.checkbox("Detect clusters automatically", value=True)
