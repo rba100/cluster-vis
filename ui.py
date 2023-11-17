@@ -92,15 +92,15 @@ def main():
             similarity_changed = similarity_threshold != st.session_state.similarity_threshold
             st.session_state.similarity_threshold = similarity_threshold
             string_list = [s for s in inputText.strip().split('\n') if s.strip()]
-            isfilter = (st.button("Apply filter") or similarity_changed or filterOutChanged) \
+            isfilter = (st.button("Apply filter to plot") or similarity_changed or filterOutChanged) \
                 and st.session_state.comparison_text.strip() != "" \
                 and st.session_state.tsne_data is not None
-            showFilteredTextItems = st.session_state.filterMask is not None and st.button("Show filtered text items")
+            showFilterLabel = filterOut and "Show remaining items" or "Show filter items"
+            showFilteredTextItems = st.session_state.filterMask is not None and st.button(showFilterLabel)
             if showFilteredTextItems:
-                st.text_area("Filtered text items", "\n".join(np.array(string_list)[st.session_state.filterMask]))
+                st.text_area("Filtered text items", "\n".join(np.array(string_list)[st.session_state.filterMask]), help="You can copy this back into the text box above to generate a new plot with the filtered items.")
 
-
-        with st.expander("Help", expanded=False,):
+        with st.expander("Help", expanded=True):
             st.caption("This tool groups similar text items together and presents them as a visual plot. You can then mouse over the points to see the corresponding text and manually identify common themes.")
             st.caption("The first step is to enter your text items in the box above, one per line, then click the 'Generate Scatter Plot'.")
             st.caption("To help you spot common themes you can specify a number of clusters to identiy and these will be colour-coded. This feature uses traditional statistical methods to identify clusters of similar items.")

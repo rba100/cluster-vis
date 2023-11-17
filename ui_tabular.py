@@ -53,8 +53,11 @@ def main():
 
         st.subheader("Instructions")
         st.caption("Your labels will be sematically matched to the data. You can see how a label matches to the data by adjusting the threshold in the 'Tune' tab. The threshold is the minimum similarity between the label and the data for the label to be considered a match. If the ordering of the data doesn't match your expectations, re-write the label to be more specific (labels can be long-winded and descriptive).)")
-        st.subheader("Composite labels")
-        st.caption("labels can be made up of multiple components. Any label starting with a '!' will be treated a composite label. This example should illustrate the format: \"!my special field['term 1', 'term 2', 'term 3']\". The field name does not contribute to the actual embedding vector and is just a name for UI purposes. The rest should be a JSON array of strings that will equally contribute to the label.")
+        st.subheader("Advanced labels")
+        st.caption("Labels can be made up of multiple components or imported from the extraction workflow.")
+        st.caption("Any label starting with a '!' will be treated a composite label. The field name does not contribute to the actual embedding vector and is just a name for UI purposes. The rest should be a JSON array of strings that will equally contribute to the label.")
+        st.text("!my special field['term 1', 'term 2', 'term 3']", help="Each word in the array will be equally weighted in the label. The label name is not used in the vector calculation.")
+        st.text("!my special field[-0.006332213724394078, -0.017716300624574813... for 1536 numbers]", help="This is a vector that was exported from the extraction workflow. You can't tweak or make these yourself easily.")
 
         if apply:
             data_strings = st.session_state.data_strings_raw.split("\n")
@@ -91,7 +94,10 @@ def main():
                     data.append(row)
                 dataframe = pd.DataFrame(data, columns=columns)
                 dataframe = dataframe.sort_values(by=['distance'], ascending=True)
-                st.dataframe(dataframe, hide_index=True, height=1000, column_config={'difference' : st.column_config.NumberColumn(format="%.4f")})
+                st.dataframe(dataframe, hide_index=True, height=1000,
+                             column_config={'text' : st.column_config.TextColumn(width="large"),
+                                            'matches': st.column_config.TextColumn(width="small"),
+                                            'difference' : st.column_config.NumberColumn(format="%.4f", width="small")}, use_container_width=True)
         
     with tab2:
         if (not canRender):        
@@ -111,7 +117,7 @@ def main():
                 data.append(row)
             st.session_state.dataframe = pd.DataFrame(data, columns=columns)
 
-            st.dataframe(st.session_state.dataframe, hide_index=True)
+            st.dataframe(st.session_state.dataframe, hide_index=True, use_container_width=True)
 
     conn.close()
 
