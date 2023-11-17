@@ -12,10 +12,10 @@ import psycopg2
 def main():
 
     if 'data_strings_raw' not in st.session_state:
-        st.session_state.data_strings_raw = None
+        st.session_state.data_strings_raw = ''
 
     if 'labels_strings_raw' not in st.session_state:
-        st.session_state.labels_strings_raw = None
+        st.session_state.labels_strings_raw = ''
 
     if 'data_strings' not in st.session_state:
         st.session_state.data_strings = None
@@ -46,8 +46,8 @@ def main():
     tab1, tab2, tab3 = st.tabs(["Configure", "Tabulate", "Tune"])
 
     with tab1:
-        st.session_state.data_strings_raw = st.text_area("Enter your text items")
-        st.session_state.labels_strings_raw = st.text_area("Enter your labels")
+        st.session_state.data_strings_raw = st.text_area("Enter your text items", value=st.session_state.data_strings_raw)
+        st.session_state.labels_strings_raw = st.text_area("Enter your labels", st.session_state.labels_strings_raw)
         submitText = "Submit" if st.session_state.data_vectors is None else "Apply changes"
         apply = st.button(submitText)
 

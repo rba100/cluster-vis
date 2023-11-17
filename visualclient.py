@@ -74,9 +74,9 @@ def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensio
             )
 
     # Update layout and title
-    fig.update_layout(        
+    fig.update_layout(
         autosize=False,
-        width=800,
+        # width=1000,
         height=1000,
         margin=dict(l=50, r=50, b=100, t=100, pad=4),
         legend=dict(
