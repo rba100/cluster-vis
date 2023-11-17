@@ -157,7 +157,7 @@ def main():
             st.session_state.labels = labels
             st.session_state.descriptions = descriptions
             st.session_state.centroids = centroids
-            if(st.session_state.gptLabelling and len(st.session_state.descriptions) > 0 and len(st.session_state.descriptions) < 25):
+            if(st.session_state.gptLabelling and len(st.session_state.descriptions) > 0 and len(st.session_state.descriptions) < 50):
                 tasks = []
                 for(i, label) in enumerate(st.session_state.descriptions):
                     samples = np.array(string_list)[st.session_state.labels == i]
