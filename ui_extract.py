@@ -17,11 +17,14 @@ def main():
     if 'tsne_data' not in st.session_state:
         st.session_state.tsne_data = None
 
-    if 'vectors' not in st.session_state:
-        st.session_state.vectors = None
+    if 'data_vectors' not in st.session_state:
+        st.session_state.data_vectors = None
 
     if 'labels' not in st.session_state:
         st.session_state.labels = None
+
+    if 'labels_thresholds' not in st.session_state:
+        st.session_state.labels_thresholds = {}
 
     if 'descriptions' not in st.session_state:
         st.session_state.descriptions = None
@@ -110,9 +113,8 @@ def main():
             st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
             st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
             st.session_state.use3d = st.checkbox("Use 3D plot", False)
-            showVectors = st.button("Show centroids")
             importToClassify = st.button("Import to classify")
-            if(st.session_state.centroids is not None and (showVectors or importToClassify)):
+            if(st.session_state.centroids is not None and (importToClassify)):
                 descs = []
                 for i, desc in enumerate(st.session_state.descriptions):
                     if desc in descs:
@@ -120,10 +122,19 @@ def main():
                     else:
                         descs.append(desc)
                 expressions = [f"!{desc} {json.dumps(list(st.session_state.centroids[i]))}" for i, desc in enumerate(descs)]
-                if showVectors:
-                    st.text_area("Centroid vectors", "\n".join(expressions))
-                if importToClassify:
-                    st.session_state.labels_strings_raw = "\n".join(expressions)
+
+                st.session_state.labels_strings_raw = "\n".join(expressions)
+
+                # Pre-populate the tuning data with values that capture the same percentage of data as the original cluster group.
+                similarities = cosine_similarity(st.session_state.data_vectors, st.session_state.centroids)                
+                for i, _ in enumerate(st.session_state.centroids):
+                    print(f"cluster {st.session_state.descriptions[i]}")
+                    centroid_similarities = similarities[:, i]
+                    clusterSize = np.count_nonzero(st.session_state.labels == i)
+                    clusterProportion = clusterSize / len(st.session_state.labels)
+                    threshold_similarity = np.percentile(centroid_similarities, 100 - clusterProportion * 100)
+                    cosine_distance_threshold = 1 - threshold_similarity
+                    st.session_state.labels_thresholds[st.session_state.descriptions[i]] = cosine_distance_threshold
 
     dimensions = 3 if st.session_state.use3d else 2
 
@@ -131,7 +142,7 @@ def main():
 
         if (isfilter):
             comparison_embedding = get_embeddings([st.session_state.comparison_text.strip()], conn)[0]
-            similarities = cosine_similarity(st.session_state.vectors, comparison_embedding.reshape(1, -1)).flatten()
+            similarities = cosine_similarity(st.session_state.data_vectors, comparison_embedding.reshape(1, -1)).flatten()
             if filterOut:
                 st.session_state.filterMask = similarities < (1 - st.session_state.similarity_threshold)
             else:
@@ -144,16 +155,16 @@ def main():
             st.caption(f"Showing {len(filtered_data)} of {len(st.session_state.tsne_data)} items")
 
         if (isGenerate):
-            st.session_state.vectors = get_embeddings(string_list, conn)
+            st.session_state.data_vectors = get_embeddings(string_list, conn)
             if(st.session_state.removeConceptText.strip() != ""):
                 vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
-                st.session_state.vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.vectors, vectorToRemove)
+                st.session_state.data_vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.data_vectors, vectorToRemove)
             labels, descriptions, centroids = get_clusters(conn,
-                                                        st.session_state.clusteringAlgorithm,
-                                                        st.session_state.vectors,
-                                                        n_clusters=n_clusters,
-                                                        random_state=st.session_state.randomSeed,
-                                                        distance_threshold=distance_threshold)
+                                                           st.session_state.clusteringAlgorithm,
+                                                           st.session_state.data_vectors,
+                                                           n_clusters=n_clusters,
+                                                           random_state=st.session_state.randomSeed,
+                                                           distance_threshold=distance_threshold)
             st.session_state.labels = labels
             st.session_state.descriptions = descriptions
             st.session_state.centroids = centroids
@@ -166,13 +177,13 @@ def main():
                     tasks.append({"labels": label, "samples": samples})
                 st.session_state.descriptions = generate_cluster_names_many(tasks)
 
-            st.session_state.tsne_data = get_tsne_data(st.session_state.vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
+            st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
             fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
             st.plotly_chart(fig, use_container_width=True)
         elif(st.session_state.tsne_data is not None and not isfilter):
             tsneDim = st.session_state.tsne_data.shape[1]
             if tsneDim != dimensions:
-                st.session_state.tsne_data = get_tsne_data(st.session_state.vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
+                st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
             fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
             st.plotly_chart(fig, use_container_width=True)
 
