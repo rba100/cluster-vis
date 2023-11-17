@@ -19,6 +19,7 @@ with st.sidebar:
         if st.button('Load example'):
             with open('sample.txt', 'r', encoding='utf-8') as f:
                 st.session_state.data_strings_raw = f.read()
+        st.caption("If you find that clustering focusses to much on 'office' concecepts, try the 'remove concept' feature with a prompt like 'office building'.")
 
 # Display the selected sub app
 if st.session_state.mode == 'Extract':
