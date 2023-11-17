@@ -1,6 +1,6 @@
 import streamlit as st
-from ui import main as extract
-from ui_tabular import main as classify
+from ui_extract import main as extract
+from ui_classify import main as classify
 
 st.set_page_config(layout="wide")
 

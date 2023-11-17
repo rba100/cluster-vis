@@ -57,7 +57,7 @@ def main():
         st.caption("Labels can be made up of multiple components or imported from the extraction workflow.")
         st.caption("Any label starting with a '!' will be treated a composite label. The field name does not contribute to the actual embedding vector and is just a name for UI purposes. The rest should be a JSON array of strings that will equally contribute to the label.")
         st.text("!my special field['term 1', 'term 2', 'term 3']", help="Each word in the array will be equally weighted in the label. The label name is not used in the vector calculation.")
-        st.text("!my special field[-0.006332213724394078, -0.017716300624574813... for 1536 numbers]", help="This is a vector that was exported from the extraction workflow. You can't tweak or make these yourself easily.")
+        st.text("!my special field[-0.006332213724394078, -0.017716300624574813... for 1536 numbers]", help="This is a vector that was exported from the extraction workflow. You can't easily tweak or make these yourself.")
 
         if apply:
             data_strings = st.session_state.data_strings_raw.split("\n")
