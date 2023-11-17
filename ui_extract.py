@@ -128,7 +128,6 @@ def main():
                 # Pre-populate the tuning data with values that capture the same percentage of data as the original cluster group.
                 similarities = cosine_similarity(st.session_state.data_vectors, st.session_state.centroids)                
                 for i, _ in enumerate(st.session_state.centroids):
-                    print(f"cluster {st.session_state.descriptions[i]}")
                     centroid_similarities = similarities[:, i]
                     clusterSize = np.count_nonzero(st.session_state.labels == i)
                     clusterProportion = clusterSize / len(st.session_state.labels)
