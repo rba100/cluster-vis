@@ -97,6 +97,8 @@ def getCompositeVector(expressionString: str, _conn):
     # if list items are strings
     if all(isinstance(item, str) for item in terms):
         vectors = get_embeddings(terms, _conn)
+        mean = np.mean(vectors, axis=0)
+        return mean / np.linalg.norm(mean)
     # else if the list items are numbers that can be cast to floats
     elif all(isinstance(item, int) or isinstance(item, float) for item in terms):
         if(len(terms) != 1536):
@@ -104,8 +106,6 @@ def getCompositeVector(expressionString: str, _conn):
         return list(np.array(terms))
     else:
         raise Exception("Expression string must include an array of strings or numbers")
-    mean = np.mean(vectors, axis=0)
-    return mean / np.linalg.norm(mean)
 
 def getFieldName(input: str):
     if(len(input) < 2 or input[0] != '!'):
