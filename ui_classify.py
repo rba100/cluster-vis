@@ -67,7 +67,7 @@ def main():
             st.session_state.data_vectors = get_embeddings(st.session_state.data_strings, conn)
             if(st.session_state.removeConceptText.strip() != ""):
                 vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
-                st.session_state.vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.vectors, vectorToRemove)
+                st.session_state.data_vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.data_vectors, vectorToRemove)
             st.session_state.labels_strings = list(map(getFieldName, [x.strip() for x in labels_strings if x.strip()]))
             for label in st.session_state.labels_strings:
                 if not label in st.session_state.labels_thresholds:
