@@ -82,7 +82,7 @@ def main():
             else:
                 n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=40, value=8, disabled=not detectClusters)
             if(st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
-                distance_threshold = st.slider("Distance threshold", 0.0, 1.0, 0.31, 0.01, help="Increasing this makes items less likely to be merged, resulting in more clusters.")
+                distance_threshold = st.slider("Distance threshold", 0.0, 1.0, 0.31, 0.01, help="Increasing this makes items more likely to be merged, resulting in fewer clusters. If you get an error, try raising this value.")
                 n_clusters = 1
             else: distance_threshold = None
             st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters        
@@ -107,9 +107,10 @@ def main():
 
         with st.expander("Help", expanded=True):
             st.caption("This tool groups similar text items together and presents them as a visual plot. You can then mouse over the points to see the corresponding text and manually identify common themes.")
-            st.caption("The first step is to enter your text items in the box above, one per line, then click the 'Generate Scatter Plot'.")
+            st.caption("The first step is to enter your text items in the box above, one per line, then click the 'Render'.")
             st.caption("To help you spot common themes you can specify a number of clusters to identiy and these will be colour-coded. This feature uses traditional statistical methods to identify clusters of similar items.")
-            st.caption("If you want to name the clusters, click the 'Use OpenAI to name clusters' checkbox and click the 'Generate Scatter Plot' button again. This adds a few seconds to the processing time. Note that you can click on the items in the legend to hide or show that category.")
+            st.caption("You can choose between two clustering algorithms. KMeans should give clusters of similar sizes. Hierarchical clustering is slower and better at finding niche concerns, but you might end up with one cluster containing 90% of the data and a load of clusters with only a few items in.")
+            st.caption("You can use ChatGPT to name the clusters which adds a few seconds to the processing time. The AI is shown the nearest words list and a few samples from the cluster to come up with a name. If you find that a few of the clusters end up with the same name then you are probably generating too many or too few clusters for the varience in the data.")
 
         with st.expander("Experimental", expanded=False):
             st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
