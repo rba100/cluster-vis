@@ -1,17 +1,17 @@
 import streamlit as st
 from ui_extract import main as extract
 from ui_classify import main as classify
+from ui_calculator import main as calculator
 
 st.set_page_config(layout="wide")
 
 if not hasattr(st.session_state, 'mode'):
     st.session_state.mode = 'Extract'
 
-
 with st.sidebar:
     # Create a sidebar for navigation
     st.sidebar.title('Thematic extraction and classification')
-    sub_apps = ['Extract', 'Classify']
+    sub_apps = ['Extract', 'Classify', 'Calculator']
     st.session_state.mode = st.radio('Choose a workflow:', sub_apps)
 
     with st.expander('Examples'):
@@ -26,3 +26,5 @@ if st.session_state.mode == 'Extract':
     extract()
 elif st.session_state.mode == 'Classify':
     classify()
+elif st.session_state.mode == 'Calculator':
+    calculator()
