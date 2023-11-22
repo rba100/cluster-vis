@@ -6,16 +6,16 @@ from vectordbclient import get_closest_words;
 import streamlit as st
 
 def get_clusters(_conn, algorithm, vectors, n_clusters, random_state=None, distance_threshold=None):
-        switcher = {
-            "KMeans": lambda: get_clusters_kmeans(_conn, vectors, n_clusters, random_state=random_state),
-            "Hierarchical": lambda: get_clusters_h(_conn, vectors, n_clusters),
-            "Hierarchical (Threshold)": lambda: get_clusters_h_threshold(_conn, vectors, distance_threshold)
-        }
-        if(not algorithm in switcher):
-            raise Exception("Invalid algorithm")
-        func = switcher.get(algorithm, lambda: None)
-        labels, descriptions, centroids = func()
-        return labels, descriptions, centroids
+    switcher = {
+        "KMeans": lambda: get_clusters_kmeans(_conn, vectors, n_clusters, random_state=random_state),
+        "Hierarchical": lambda: get_clusters_h(_conn, vectors, n_clusters),
+        "Hierarchical (Threshold)": lambda: get_clusters_h_threshold(_conn, vectors, distance_threshold)
+    }
+    if(not algorithm in switcher):
+        raise Exception("Invalid algorithm. Choices: KMeans, Hierarchical, Hierarchical (Threshold)")
+    func = switcher.get(algorithm, lambda: None)
+    labels, descriptions, centroids = func()
+    return labels, descriptions, centroids
 
 @st.cache_data(max_entries=4)
 def get_clusters_kmeans(_conn, embeddings, n_clusters=10, random_state=42):

@@ -4,7 +4,9 @@ from gptclient import generate_cluster_names_many, name_clusters_array
 from clusterclient import get_clusters
 from vectordbclient import get_closest_words
 from visualclient import get_tsne_data, render_tsne_plotly
+from ui_classify import classify_load_data
 from sklearn.metrics.pairwise import cosine_similarity
+from st_utils import value_persister
 import numpy as np
 import psycopg2
 import json
@@ -68,10 +70,12 @@ def main():
 
     with col1:
         st.session_state.data_strings_raw = st.text_area("Enter your text items, separated by newlines.", value=st.session_state.data_strings_raw)
-        inputText = st.session_state.data_strings_raw 
-        st.session_state.removeConceptText = st.text_input("Remove concept from data",
-                                                           value=st.session_state.removeConceptText,
-                                                           help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
+        inputText = st.session_state.data_strings_raw
+        removeConceptKey, removeConceptUpdate = value_persister("removeConceptText")
+        st.text_input("Remove concept from data",
+                      key=removeConceptKey,
+                      on_change=removeConceptUpdate,
+                      help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
         isGenerate = st.button("Render")
 
         with st.expander("Automatic cluster identification", expanded=False):
@@ -80,7 +84,8 @@ def main():
             if(not detectClusters or st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
                 n_clusters = 1
             else:
-                n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=40, value=8, disabled=not detectClusters)
+                numClustersKey, numClustersUpdate = value_persister("n_clusters")
+                n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=40, value=8, disabled=not detectClusters, key=numClustersKey, on_change=numClustersUpdate)
             if(st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
                 distance_threshold = st.slider("Distance threshold", 0.0, 1.0, 0.31, 0.01, help="Increasing this makes items more likely to be merged, resulting in fewer clusters. If you get an error, try raising this value.")
                 n_clusters = 1
@@ -157,6 +162,7 @@ def main():
                     cosine_distance_threshold = 1 - threshold_similarity                    
                     # Store the threshold in the dictionary with the label as the key
                     st.session_state.labels_thresholds[st.session_state.descriptions[label]] = cosine_distance_threshold
+                classify_load_data(conn)
 
 
     dimensions = 3 if st.session_state.use3d else 2

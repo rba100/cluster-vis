@@ -1,13 +1,26 @@
 import streamlit as st
 from vectorclient import get_embeddings, get_embeddings_exp, getFieldName, reflect_vector
-from gptclient import generate_cluster_names_many
-from clusterclient import get_clusters, get_clusters_h
-from vectordbclient import get_closest_words
-from visualclient import get_tsne_data, render_tsne_plotly
 from sklearn.metrics.pairwise import cosine_similarity
+from st_utils import value_persister
 import numpy as np
 import pandas as pd
 import psycopg2
+
+def classify_load_data(conn):
+    data_strings = st.session_state.data_strings_raw.split("\n")
+    labels_strings = st.session_state.labels_strings_raw.split("\n")
+    st.session_state.data_strings = [x.strip() for x in data_strings if x.strip()]
+    st.session_state.data_vectors = get_embeddings(st.session_state.data_strings, conn)
+    if(st.session_state.removeConceptText.strip() != ""):
+        vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
+        st.session_state.data_vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.data_vectors, vectorToRemove)
+    st.session_state.labels_strings = list(map(getFieldName, [x.strip() for x in labels_strings if x.strip()]))
+    for label in st.session_state.labels_strings:
+        if not label in st.session_state.labels_thresholds:
+            st.session_state.labels_thresholds[label] = 0.18
+    st.session_state.labels_vectors = get_embeddings_exp(labels_strings, conn)
+    st.session_state.similarity = cosine_similarity(st.session_state.data_vectors, st.session_state.labels_vectors)
+    st.session_state.dataframe = None
 
 def main():
 
@@ -48,8 +61,10 @@ def main():
     with tab1:
         st.session_state.data_strings_raw = st.text_area("Enter your text items", value=st.session_state.data_strings_raw)
         st.session_state.removeConceptText = st.text_input("Remove concept from data", value=st.session_state.removeConceptText, help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
-        st.session_state.labels_strings_raw = st.text_area("Enter your labels", st.session_state.labels_strings_raw)
-        submitText = "Submit" if st.session_state.data_vectors is None else "Apply changes"
+
+        labelStringsKey, labelStringsUpdate = value_persister("labels_strings_raw")
+        st.text_area("Enter your labels", key=labelStringsKey, on_change=labelStringsUpdate)
+        submitText = "Submit" if st.session_state.data_vectors is None else "Apply"
         apply = st.button(submitText)
 
         st.subheader("Instructions")
@@ -61,25 +76,12 @@ def main():
         st.text("!my special field[-0.006332213724394078, -0.017716300624574813... for 1536 numbers]", help="This is a vector that was exported from the extraction workflow. You can't easily tweak or make these yourself.")
 
         if apply:
-            data_strings = st.session_state.data_strings_raw.split("\n")
-            labels_strings = st.session_state.labels_strings_raw.split("\n")
-            st.session_state.data_strings = [x.strip() for x in data_strings if x.strip()]
-            st.session_state.data_vectors = get_embeddings(st.session_state.data_strings, conn)
-            if(st.session_state.removeConceptText.strip() != ""):
-                vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
-                st.session_state.data_vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.data_vectors, vectorToRemove)
-            st.session_state.labels_strings = list(map(getFieldName, [x.strip() for x in labels_strings if x.strip()]))
-            for label in st.session_state.labels_strings:
-                if not label in st.session_state.labels_thresholds:
-                    st.session_state.labels_thresholds[label] = 0.18
-            st.session_state.labels_vectors = get_embeddings_exp(labels_strings, conn)
-            st.session_state.similarity = cosine_similarity(st.session_state.data_vectors, st.session_state.labels_vectors)
-            st.session_state.dataframe = None
+            classify_load_data(conn)
 
     canRender = st.session_state.data_vectors is not None and st.session_state.labels_vectors is not None
 
     with tab3:
-        if (not canRender):        
+        if (not canRender):
             st.text("Please enter data and labels in the 'Configure' tab and click 'Apply'")
         else:
             col1, col2 = st.columns(2)
@@ -87,7 +89,8 @@ def main():
                 selectedLabel = st.selectbox("Select a label to tune", st.session_state.labels_strings)
             if(selectedLabel):
                 with col2:
-                    st.session_state.labels_thresholds[selectedLabel] = st.number_input("Threshold", 0.0, 1.0, st.session_state.labels_thresholds[selectedLabel], 0.0001, format="%.4f", key=selectedLabel)
+                    key, update = value_persister(selectedLabel, storeKey='labels_thresholds')
+                    st.number_input("Threshold", 0.0, 1.0, format="%.4f", key=key, on_change=update)
                 columns = ['text', 'matches', 'distance']
 
                 data = []
