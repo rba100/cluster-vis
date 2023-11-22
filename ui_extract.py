@@ -32,12 +32,11 @@ def main():
 
     conn = connectToDb()
 
-    height = 1000
     col1, col2 = st.columns([0.4, 0.6])
 
     with col1:
         st.session_state.data_strings_raw = st.text_area("Enter your text items, separated by newlines.", value=st.session_state.data_strings_raw)
-        inputText = st.session_state.data_strings_raw
+        string_list = [s for s in st.session_state.data_strings_raw.strip().split('\n') if s.strip()]
         removeConceptKey, removeConceptUpdate = value_persister("removeConceptText")
         st.text_input("Remove concept from data",
                       key=removeConceptKey,
@@ -68,7 +67,6 @@ def main():
             st.session_state.lastfilterOut = filterOut
             similarity_changed = similarity_threshold != st.session_state.similarity_threshold
             st.session_state.similarity_threshold = similarity_threshold
-            string_list = [s for s in inputText.strip().split('\n') if s.strip()]
             isfilter = (st.button("Apply filter to plot") or similarity_changed or filterOutChanged) \
                 and st.session_state.comparison_text.strip() != "" \
                 and st.session_state.tsne_data is not None
@@ -142,7 +140,7 @@ def main():
             if filterOut:
                 st.session_state.filterMask = similarities < (1 - st.session_state.similarity_threshold)
             else:
-                st.session_state.filterMask = similarities >= (1-st.session_state.similarity_threshold)
+                st.session_state.filterMask = similarities >= (1 - st.session_state.similarity_threshold)
             filtered_data = st.session_state.tsne_data[st.session_state.filterMask]
             filtered_labels = st.session_state.labels[st.session_state.filterMask]
             filtered_string_list = np.array(string_list)[st.session_state.filterMask]

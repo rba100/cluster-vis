@@ -7,7 +7,6 @@ st.set_page_config(layout="wide")
 if not hasattr(st.session_state, 'mode'):
     st.session_state.mode = 'Extract'
 
-
 with st.sidebar:
     # Create a sidebar for navigation
     st.sidebar.header('Thematic extraction and classification', divider='rainbow')
@@ -19,7 +18,7 @@ with st.sidebar:
         if st.button('Load example'):
             with open('sample.txt', 'r', encoding='utf-8') as f:
                 st.session_state.data_strings_raw = f.read()
-        st.caption("You will find that clustering focusses too much on 'office' or 'facility' concepts. For interesting results try removing the concept of 'office building' and setting clusters to 25.")
+        st.caption("You will find that clustering focuses too much on 'office' or 'facility' concepts. Try removing the concept of 'office building' and setting clusters to 25.")
 
 # Display the selected sub app
 if st.session_state.mode == 'Extract':
