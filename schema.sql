@@ -5,7 +5,9 @@ SELECT 'read the script' FROM you_pressed_f5_without_reading_the_script;
 
 -- install the pgvector extension, minimum version 0.51.0
 
-CREATE TABLE words (word varchar(64) PRIMARY KEY, embedding vector(1536) NOT NULL, isCommon boolean NOT NULL DEFAULT false);
+CREATE TABLE words (word varchar(64) PRIMARY KEY,
+                    embedding vector(1536) NOT NULL,
+                    isCommon boolean NOT NULL DEFAULT false);
 
 -- Do not build the index until you have populated the words table.
 -- Note: This takes a long time, leave it going overnight.
