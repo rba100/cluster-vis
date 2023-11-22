@@ -18,7 +18,7 @@ def get_tsne_data(embeddings, dimensions=2, random_state=42):
     return X_tsne
 
 @st.cache_data(max_entries=4)
-def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensions=2):
+def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensions=2, height=1000):
     if dimensions not in [2, 3, 4]:
         raise ValueError("dimensions must be 2 or 3, or... 4")
 
@@ -77,9 +77,9 @@ def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensio
     fig.update_layout(
         autosize=False,
         # width=1000,
-        height=1000,
-        margin=dict(l=50, r=50, b=100, t=100, pad=4),
-        legend=dict(
+        height=height,
+        #margin=dict(l=50, r=50, b=100, t=100, pad=4),
+        legend=dict( 
             title='Cluster Descriptions',
             orientation="h",
             y=-0.15,  # position the legend below the plot

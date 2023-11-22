@@ -10,7 +10,7 @@ if not hasattr(st.session_state, 'mode'):
 
 with st.sidebar:
     # Create a sidebar for navigation
-    st.sidebar.title('Thematic extraction and classification')
+    st.sidebar.header('Thematic extraction and classification', divider='rainbow')
     sub_apps = ['Extract', 'Classify']
     st.session_state.mode = st.radio('Choose a workflow:', sub_apps)
 
@@ -19,7 +19,7 @@ with st.sidebar:
         if st.button('Load example'):
             with open('sample.txt', 'r', encoding='utf-8') as f:
                 st.session_state.data_strings_raw = f.read()
-        st.caption("If you find that clustering focusses to much on 'office' concecepts, try the 'remove concept' feature with a prompt like 'office building'.")
+        st.caption("You will find that clustering focusses too much on 'office' or 'facility' concepts. For interesting results try removing the concept of 'office building' and setting clusters to 25.")
 
 # Display the selected sub app
 if st.session_state.mode == 'Extract':

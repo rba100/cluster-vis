@@ -32,7 +32,8 @@ def main():
 
     conn = connectToDb()
 
-    col1, col2 = st.columns([0.4,0.6])
+    height = 1000
+    col1, col2 = st.columns([0.4, 0.6])
 
     with col1:
         st.session_state.data_strings_raw = st.text_area("Enter your text items, separated by newlines.", value=st.session_state.data_strings_raw)
@@ -56,10 +57,10 @@ def main():
                 distance_threshold = st.slider("Distance threshold", 0.0, 1.0, 0.31, 0.01, help="Increasing this makes items more likely to be merged, resulting in fewer clusters. If you get an error, try raising this value.")
                 n_clusters = 1
             else: distance_threshold = None
-            st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters        
+            st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters
 
         with st.expander("Filtering", expanded=False):
-            filterChoice = st.selectbox("Filter type", ["Filter out", "Show filtered"], help="Show only (or filter out) items that are semantically similar to this text. This is useful if you want to focus on a particular theme or hide noise. Tip: a full stop '.' tends to match poor quality answers before good ones.")
+            filterChoice = st.selectbox("Filter type", ["Filter out", "Show filtered"])
             filterOut = filterChoice == "Filter out"
             st.session_state.comparison_text = st.text_input("Enter text for semantic filtering", help="Show only (or filter out) items that are semantically similar to this text. This is useful if you want to focus on a particular theme.")
             similarity_threshold = st.slider("Similarity threshold", 0.0, 1.0, 0.5, 0.01, help="Adjust this to show or hide more items that are similar to the comparison text.")
@@ -79,11 +80,11 @@ def main():
         with st.expander("Help", expanded=True):
             st.caption("This tool groups similar text items together and presents them as a visual plot. You can then mouse over the points to see the corresponding text and manually identify common themes.")
             st.caption("The first step is to enter your text items in the box above, one per line, then click the 'Render'.")
-            st.caption("To help you spot common themes you can specify a number of clusters to identiy and these will be colour-coded. This feature uses traditional statistical methods to identify clusters of similar items.")
+            st.caption("To help you spot common themes you can specify a number of clusters to identify and these will be colour-coded. This feature uses traditional statistical methods to identify clusters of similar items.")
             st.caption("You can choose between two clustering algorithms. KMeans should give clusters of similar sizes. Hierarchical clustering is slower and better at finding niche concerns, but you might end up with one cluster containing 90% of the data and a load of clusters with only a few items in.")
-            st.caption("You can use ChatGPT to name the clusters which adds a few seconds to the processing time. The AI is shown the nearest words list and a few samples from the cluster to come up with a name. If you find that a few of the clusters end up with the same name then you are probably generating too many or too few clusters for the varience in the data.")
 
         with st.expander("Experimental", expanded=False):
+            height = st.slider("Plot height", 200, 2000, 1000, 50, help="Adjust this to make the plot taller or shallower.")
             st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
             st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
             st.session_state.use3d = st.checkbox("Use 3D plot", False)
@@ -145,7 +146,7 @@ def main():
             filtered_data = st.session_state.tsne_data[st.session_state.filterMask]
             filtered_labels = st.session_state.labels[st.session_state.filterMask]
             filtered_string_list = np.array(string_list)[st.session_state.filterMask]
-            fig = render_tsne_plotly(filtered_data, filtered_labels, filtered_string_list, st.session_state.descriptions, dimensions=dimensions)
+            fig = render_tsne_plotly(filtered_data, filtered_labels, filtered_string_list, st.session_state.descriptions, dimensions=dimensions, height=height)
             st.plotly_chart(fig, use_container_width=True)
             st.caption(f"Showing {len(filtered_data)} of {len(st.session_state.tsne_data)} items")
 
@@ -173,13 +174,13 @@ def main():
                 st.session_state.descriptions = generate_cluster_names_many(tasks)
 
             st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
-            fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
+            fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions, height=height)
             st.plotly_chart(fig, use_container_width=True)
         elif(st.session_state.tsne_data is not None and not isfilter):
             tsneDim = st.session_state.tsne_data.shape[1]
             if tsneDim != dimensions:
                 st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
-            fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions)
+            fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions, height=height)
             st.plotly_chart(fig, use_container_width=True)
 
     conn.close()
