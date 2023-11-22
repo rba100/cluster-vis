@@ -11,12 +11,8 @@ This is a Streamlit app that performs semantic clustering of text items and pres
 
 ## Usage
 
-1. Enter your text items in the input box, with each item separated by a new line.
-2. Click the "Generate Scatter Plot" button to generate the visual plot of the text items.
-3. Optionally, specify the number of clusters to identify and choose whether to use OpenAI to name the clusters.
-4. Use the filtering options to show or hide items that are similar to a given text.
-5. Explore the plot by hovering over the points to see the corresponding text and manually identify common themes.
+See in-app help. Quick start: paste a bunch of text items, each on a new line, and click 'Render'.
 
 ## Additional Information
 
-- The app requires a PostgreSQL database to store the text items and perform database operations. Unfortunately it also needs anout 6GB of static reference data to be useful.
+- The app requires a PostgreSQL database to store the text items and perform database operations. Unfortunately it also needs a tonne of static reference data to be useful.
