@@ -6,54 +6,20 @@ from vectordbclient import get_closest_words
 from visualclient import get_tsne_data, render_tsne_plotly
 from ui_classify import classify_load_data
 from sklearn.metrics.pairwise import cosine_similarity
-from st_utils import value_persister
+from st_utils import value_persister, init_session_state
 import numpy as np
 import psycopg2
 import json
 
 def main():
 
-    if 'data_strings_raw' not in st.session_state:
-        st.session_state.data_strings_raw = ''
-
-    if 'tsne_data' not in st.session_state:
-        st.session_state.tsne_data = None
-
-    if 'data_vectors' not in st.session_state:
-        st.session_state.data_vectors = None
-
-    if 'labels' not in st.session_state:
-        st.session_state.labels = None
-
-    if 'labels_thresholds' not in st.session_state:
-        st.session_state.labels_thresholds = {}
-
-    if 'descriptions' not in st.session_state:
-        st.session_state.descriptions = None
-
-    if 'centroids' not in st.session_state:
-        st.session_state.centroids = None
+    init_session_state(empty   = ['data_strings', 'labels_strings', 'data_vectors', 'centroids', 'dataframe', 'tsne_data', 'filterMask'],
+                       strings = ['data_strings_raw', 'removeConceptText', 'comparison_text'],
+                       dicts   = ['labels_thresholds'],
+                       false   = ['use3d', 'gptLabelling', 'lastfilterOut'])
 
     if 'similarity_threshold' not in st.session_state:
         st.session_state.similarity_threshold = 0.18
-
-    if 'comparison_text' not in st.session_state:
-        st.session_state.comparison_text = ""
-
-    if 'lastfilterOut' not in st.session_state:
-        st.session_state.lastfilterOut = False
-
-    if 'gptLabelling' not in st.session_state:
-        st.session_state.gptLabelling = False
-
-    if 'filterMask' not in st.session_state:
-        st.session_state.filterMask = None
-
-    if 'removeConceptText' not in st.session_state:
-        st.session_state.removeConceptText = ""
-
-    if 'use3d' not in st.session_state:
-        st.session_state.use3d = False
 
     if 'randomSeed' not in st.session_state:
         st.session_state.randomSeed = 42

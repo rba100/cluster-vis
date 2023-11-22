@@ -1,7 +1,7 @@
 import streamlit as st
 from vectorclient import get_embeddings, get_embeddings_exp, getFieldName, reflect_vector
 from sklearn.metrics.pairwise import cosine_similarity
-from st_utils import value_persister
+from st_utils import value_persister, init_session_state
 import numpy as np
 import pandas as pd
 import psycopg2
@@ -24,32 +24,9 @@ def classify_load_data(conn):
 
 def main():
 
-    if 'data_strings_raw' not in st.session_state:
-        st.session_state.data_strings_raw = ''
-
-    if 'labels_strings_raw' not in st.session_state:
-        st.session_state.labels_strings_raw = ''
-
-    if 'data_strings' not in st.session_state:
-        st.session_state.data_strings = None
-
-    if 'labels_strings' not in st.session_state:
-        st.session_state.labels_strings = None
-
-    if 'labels_thresholds' not in st.session_state:
-        st.session_state.labels_thresholds = {}
-
-    if 'data_vectors' not in st.session_state:
-        st.session_state.data_vectors = None
-
-    if 'labels_vectors' not in st.session_state:
-        st.session_state.labels_vectors = None
-
-    if 'dataframe' not in st.session_state:
-        st.session_state.dataframe = None
-
-    if 'similarity' not in st.session_state:
-        st.session_state.similarity = None
+    init_session_state(empty   = ['data_strings', 'labels_strings', 'data_vectors', 'labels_vectors', 'dataframe', 'similarity'],
+                       strings = ['removeConceptText'],
+                       dicts   = ['labels_thresholds'])
 
     def connectToDb():
         return psycopg2.connect(st.secrets["connectionString"])
@@ -68,7 +45,7 @@ def main():
         apply = st.button(submitText)
 
         st.subheader("Instructions")
-        st.caption("Your labels will be sematically matched to the data. You can see how a label matches to the data by adjusting the threshold in the 'Tune' tab. The threshold is the minimum similarity between the label and the data for the label to be considered a match. If the ordering of the data doesn't match your expectations, re-write the label to be more specific (labels can be long-winded and descriptive).)")
+        st.caption("Your labels will be sematically matched to the data. You can see how a label matches to the data by adjusting the threshold in the 'Tune' tab. The threshold is the minimum similarity between the label and the data for the label to be considered a match. If the ordering of the data doesn't match your expectations, re-write the label to be more specific (labels can be long-winded and descriptive).")
         st.subheader("Advanced labels")
         st.caption("Labels can be made up of multiple components or imported from the extraction workflow.")
         st.caption("Any label starting with a '!' will be treated a composite label. The field name does not contribute to the actual embedding vector and is just a name for UI purposes. The rest should be a JSON array of strings that will equally contribute to the label.")

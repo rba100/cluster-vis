@@ -1,5 +1,31 @@
 import streamlit as st
 
+def init_session_state(empty=None, strings=None, dicts=None, false=None):
+    if empty is None:
+        empty = []
+    if strings is None:
+        strings = []
+    if dicts is None:
+        dicts = []
+    if false is None:
+        false = []
+    
+    for item in empty:
+        if item not in st.session_state:
+            st.session_state[item] = None
+    
+    for item in strings:
+        if item not in st.session_state:
+            st.session_state[item] = ""
+    
+    for item in dicts:
+        if item not in st.session_state:
+            st.session_state[item] = {}
+
+    for item in false:
+        if item not in st.session_state:
+            st.session_state[item] = False
+
 def value_persister(valueKey, storeKey=None):
     """
     Works around a bug in streamlit where you can't bind a varaible to a widget
