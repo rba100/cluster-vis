@@ -30,6 +30,9 @@ def main():
     if 'early_exaggeration' not in st.session_state:
         st.session_state.early_exaggeration = 12.0
 
+    if('n_clusters' not in st.session_state):
+        st.session_state.n_clusters = 8
+
     def connectToDb():
         return psycopg2.connect(st.secrets["connectionString"])
 
