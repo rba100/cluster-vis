@@ -70,7 +70,7 @@ def main():
                 distance_threshold = None
             
             st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters            
-            importToClassify = (st.session_state.centroids is not None) and st.button("Import clusters to classify workflow", help="If you want to use the detected clusters as labels in the classify workflow, click this button.")
+            importToClassify = st.button("Import clusters to classify workflow", help="If you want to use the detected clusters as labels in the classify workflow, click this button.")
 
         with st.expander("Filtering", expanded=False):
             filterChoice = st.selectbox("Filter type", ["Filter out", "Show filtered"])
@@ -103,48 +103,6 @@ def main():
             st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
             st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
             st.session_state.use3d = st.checkbox("Use 3D plot", False)
-            if(st.session_state.centroids is not None and (importToClassify)):
-                descs = []
-                for i, desc in enumerate(st.session_state.descriptions):
-                    if desc in descs:
-                        descs.append(f"{desc} ({i})")
-                    else:
-                        descs.append(desc)
-                expressions = [f"!{desc} {json.dumps(list(st.session_state.centroids[i]))}" for i, desc in enumerate(descs)]
-
-                st.session_state.labels_strings_raw = "\n".join(expressions)
-
-                # Pre-populate the tuning data with values that capture the same percentage of data as the original cluster group.
-
-                # Algorithm option 1 - threshold set to catch same % of data equal to size of cluster / total data
-                # similarities = cosine_similarity(st.session_state.data_vectors, st.session_state.centroids)            
-                # for i, _ in enumerate(st.session_state.centroids):
-                #     centroid_similarities = similarities[:, i]
-                #     clusterSize = np.count_nonzero(st.session_state.labels == i)
-                #     clusterProportion = clusterSize / len(st.session_state.labels)
-                #     threshold_similarity = np.percentile(centroid_similarities, 100 - clusterProportion * 100)
-                #     cosine_distance_threshold = 1 - threshold_similarity
-                #     st.session_state.labels_thresholds[st.session_state.descriptions[i]] = cosine_distance_threshold
-
-                # Algorithm option 2 - threshold set to catch 75% of the items that are in the cluster
-                unique_labels = np.unique(st.session_state.labels)
-                for label in unique_labels:
-                    # Get indices of vectors with the current label
-                    indices = np.where(st.session_state.labels == label)[0]                    
-                    # Get the centroid for this label
-                    centroid = st.session_state.centroids[label]                    
-                    # Calculate similarities for the vectors with the current label
-                    label_similarities = cosine_similarity(st.session_state.data_vectors[indices], centroid.reshape(1, -1))
-                    # Flatten the array to 1D
-                    label_similarities = label_similarities.flatten()                    
-                    # Determine the 25th percentile similarity value to capture 75% of data points in this cluster
-                    threshold_similarity = np.percentile(label_similarities, 25)                    
-                    # Convert the similarity to a distance
-                    cosine_distance_threshold = 1 - threshold_similarity                    
-                    # Store the threshold in the dictionary with the label as the key
-                    st.session_state.labels_thresholds[st.session_state.descriptions[label]] = cosine_distance_threshold
-                classify_load_data(conn)
-
 
     dimensions = 3 if st.session_state.use3d else 2
 
@@ -197,6 +155,48 @@ def main():
                                                            early_exaggeration=st.session_state.early_exaggeration)
             fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions, height=height)
             st.plotly_chart(fig, use_container_width=True)
+
+    if(st.session_state.centroids is not None and (importToClassify)):
+                descs = []
+                for i, desc in enumerate(st.session_state.descriptions):
+                    if desc in descs:
+                        descs.append(f"{desc} ({i})")
+                    else:
+                        descs.append(desc)
+                expressions = [f"!{desc} {json.dumps(list(st.session_state.centroids[i]))}" for i, desc in enumerate(descs)]
+
+                st.session_state.labels_strings_raw = "\n".join(expressions)
+
+                # Pre-populate the tuning data with values that capture the same percentage of data as the original cluster group.
+
+                # Algorithm option 1 - threshold set to catch same % of data equal to size of cluster / total data
+                # similarities = cosine_similarity(st.session_state.data_vectors, st.session_state.centroids)            
+                # for i, _ in enumerate(st.session_state.centroids):
+                #     centroid_similarities = similarities[:, i]
+                #     clusterSize = np.count_nonzero(st.session_state.labels == i)
+                #     clusterProportion = clusterSize / len(st.session_state.labels)
+                #     threshold_similarity = np.percentile(centroid_similarities, 100 - clusterProportion * 100)
+                #     cosine_distance_threshold = 1 - threshold_similarity
+                #     st.session_state.labels_thresholds[st.session_state.descriptions[i]] = cosine_distance_threshold
+
+                # Algorithm option 2 - threshold set to catch 75% of the items that are in the cluster
+                unique_labels = np.unique(st.session_state.labels)
+                for label in unique_labels:
+                    # Get indices of vectors with the current label
+                    indices = np.where(st.session_state.labels == label)[0]                    
+                    # Get the centroid for this label
+                    centroid = st.session_state.centroids[label]                    
+                    # Calculate similarities for the vectors with the current label
+                    label_similarities = cosine_similarity(st.session_state.data_vectors[indices], centroid.reshape(1, -1))
+                    # Flatten the array to 1D
+                    label_similarities = label_similarities.flatten()                    
+                    # Determine the 25th percentile similarity value to capture 75% of data points in this cluster
+                    threshold_similarity = np.percentile(label_similarities, 25)                    
+                    # Convert the similarity to a distance
+                    cosine_distance_threshold = 1 - threshold_similarity                    
+                    # Store the threshold in the dictionary with the label as the key
+                    st.session_state.labels_thresholds[st.session_state.descriptions[label]] = cosine_distance_threshold
+                classify_load_data(conn)
 
     conn.close()
 
