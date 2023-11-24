@@ -25,7 +25,7 @@ def classify_load_data(conn):
 def main():
 
     init_session_state(empty   = ['data_strings', 'labels_strings', 'data_vectors', 'labels_vectors', 'dataframe', 'similarity'],
-                       strings = ['removeConceptText'],
+                       strings = ['data_strings_raw', 'labels_strings_raw', 'removeConceptText'],
                        dicts   = ['labels_thresholds'])
 
     def connectToDb():
