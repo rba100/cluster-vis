@@ -27,6 +27,9 @@ def main():
     if 'clusteringAlgorithm' not in st.session_state:
         st.session_state.clusteringAlgorithm = "KMeans"
 
+    if 'early_exaggeration' not in st.session_state:
+        st.session_state.early_exaggeration = 12.0
+
     def connectToDb():
         return psycopg2.connect(st.secrets["connectionString"])
 
@@ -38,7 +41,7 @@ def main():
         st.session_state.data_strings_raw = st.text_area("Enter your text items, separated by newlines.", value=st.session_state.data_strings_raw)
         string_list = [s for s in st.session_state.data_strings_raw.strip().split('\n') if s.strip()]
         removeConceptKey, removeConceptUpdate = value_persister("removeConceptText")
-        st.text_input("Remove concept from data",
+        st.text_input("Common concept in all data (optional, experimental)",
                       key=removeConceptKey,
                       on_change=removeConceptUpdate,
                       help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
@@ -46,16 +49,23 @@ def main():
 
         with st.expander("Automatic cluster identification", expanded=False):
             detectClusters = st.checkbox("Detect clusters automatically", value=True)
-            st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "Hierarchical", "Hierarchical (Threshold)"], help="Hierarchical clustering is slower but may better results. With a threshold, the algorithm chooses the number of clusters for you (tweakable via merging threshold slider).")
-            if(not detectClusters or st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
+            st.session_state.clusteringAlgorithm = st.selectbox("Clustering algorithm", ["KMeans", "KMeans (Elbow)", "KMeans (Silhouette)", "Hierarchical", "Hierarchical (Threshold)"], help="Hierarchical clustering is slower but may better results. With a threshold, the algorithm chooses the number of clusters for you (tweakable via merging threshold slider).")
+            if(not detectClusters):
                 n_clusters = 1
-            else:
-                numClustersKey, numClustersUpdate = value_persister("n_clusters")
-                n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=40, value=8, disabled=not detectClusters, key=numClustersKey, on_change=numClustersUpdate)
-            if(st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)"):
+            elif st.session_state.clusteringAlgorithm == "Hierarchical (Threshold)":
+                st.caption("This algorithm will try to find the optimal number of clusters for you, but you tweak the threshold by which the algorith decides if two nearby clusters should be merged into one (each item starts off as its own cluster).")
                 distance_threshold = st.slider("Distance threshold", 0.0, 1.0, 0.31, 0.01, help="Increasing this makes items more likely to be merged, resulting in fewer clusters. If you get an error, try raising this value.")
                 n_clusters = 1
-            else: distance_threshold = None
+            elif(st.session_state.clusteringAlgorithm in ["KMeans", "Hierarchical"]):
+                numClustersKey, numClustersUpdate = value_persister("n_clusters")
+                n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=40, value=8, disabled=not detectClusters, key=numClustersKey, on_change=numClustersUpdate)
+            else: # Elbow or Silhouette
+                st.caption("This algorithm will try to find the optimal number of clusters for you. Works best when text items do not focus on more than one concept. Sillouette should be better than elbow, but suffers more when items are not very distinct.")
+                n_clusters = 1
+
+            if(st.session_state.clusteringAlgorithm != "Hierarchical (Threshold)"):
+                distance_threshold = None
+            
             st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters
 
         with st.expander("Filtering", expanded=False):
@@ -83,6 +93,9 @@ def main():
 
         with st.expander("Experimental", expanded=False):
             height = st.slider("Plot height", 200, 2000, 1000, 50, help="Adjust this to make the plot taller or shallower.")
+            exaggerationKey, exaggerationUpdate = value_persister("early_exaggeration")
+            st.slider("T-SNE Early exaggeration", 1.0, 50.0, 12.0, 1.0, help="Adjust this to make the plot clustering tighter.", key=exaggerationKey, on_change=exaggerationUpdate)
+
             st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
             st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
             st.session_state.use3d = st.checkbox("Use 3D plot", False)
@@ -171,13 +184,14 @@ def main():
                     tasks.append({"labels": label, "samples": samples})
                 st.session_state.descriptions = generate_cluster_names_many(tasks)
 
-            st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
+            st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed, early_exaggeration=st.session_state.early_exaggeration)
             fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions, height=height)
             st.plotly_chart(fig, use_container_width=True)
         elif(st.session_state.tsne_data is not None and not isfilter):
             tsneDim = st.session_state.tsne_data.shape[1]
             if tsneDim != dimensions:
-                st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed)
+                st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed,
+                                                           early_exaggeration=st.session_state.early_exaggeration)
             fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions, height=height)
             st.plotly_chart(fig, use_container_width=True)
 
