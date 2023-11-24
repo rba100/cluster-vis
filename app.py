@@ -18,7 +18,7 @@ with st.sidebar:
         if st.button('Load example'):
             with open('sample.txt', 'r', encoding='utf-8') as f:
                 st.session_state.data_strings_raw = f.read()
-        st.caption("You will find that clustering focuses too much on 'office' or 'facility' concepts. Try removing the concept of 'office building' and setting clusters to 25.")
+        st.caption("You will find that clustering focuses too much on 'office' or 'facility' concepts. Use 'office building' as the common concept to address this.")
 
 # Display the selected sub app
 if st.session_state.mode == 'Extract':
