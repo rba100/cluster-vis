@@ -61,7 +61,7 @@ def main():
                 n_clusters = 1
             elif(st.session_state.clusteringAlgorithm in ["KMeans", "Hierarchical"]):
                 numClustersKey, numClustersUpdate = value_persister("n_clusters")
-                n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=40, value=8, disabled=not detectClusters, key=numClustersKey, on_change=numClustersUpdate)
+                n_clusters = st.number_input("Specify number of clusters.", min_value=1, max_value=40, disabled=not detectClusters, key=numClustersKey, on_change=numClustersUpdate)
             else: # Elbow or Silhouette
                 st.caption("This algorithm will try to find the optimal number of clusters for you. Works best when text items do not focus on more than one concept. Sillouette should be better than elbow, but suffers more when items are not very distinct.")
                 n_clusters = 1
@@ -69,7 +69,8 @@ def main():
             if(st.session_state.clusteringAlgorithm != "Hierarchical (Threshold)"):
                 distance_threshold = None
             
-            st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters
+            st.session_state.gptLabelling = st.checkbox("Use OpenAI to name clusters") and detectClusters            
+            importToClassify = (st.session_state.centroids is not None) and st.button("Import clusters to classify workflow", help="If you want to use the detected clusters as labels in the classify workflow, click this button.")
 
         with st.expander("Filtering", expanded=False):
             filterChoice = st.selectbox("Filter type", ["Filter out", "Show filtered"])
@@ -102,7 +103,6 @@ def main():
             st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
             st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
             st.session_state.use3d = st.checkbox("Use 3D plot", False)
-            importToClassify = st.button("Import to classify")
             if(st.session_state.centroids is not None and (importToClassify)):
                 descs = []
                 for i, desc in enumerate(st.session_state.descriptions):
