@@ -6,8 +6,8 @@ This is a Streamlit app that performs semantic clustering of text items and pres
 
 1. Clone the repository.
 2. Install the required dependencies by running `pip install -r requirements.txt`.
-3. Set up a PostgreSQL database and update the connection string in the `ui.py` file.
-4. Run the app by executing `streamlit run ui.py` in the terminal.
+3. Create `.streamlit/secrets.toml` with connection string and openai key.
+4. Run the app by executing `streamlit run app.py` in the terminal.
 
 ## Usage
 
