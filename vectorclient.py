@@ -2,58 +2,83 @@ import openai
 import numpy as np
 import streamlit as st
 import json
+import hashlib
+
+debug = False
+
+def md5_hash(text):
+    # Return MD5 hash of the given text
+    return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 @st.cache_data(max_entries=4)
 def get_embeddings(lines, _conn):
-    text_list_truncated = lines
-    batch_size = 200
+    if debug:
+        print("get_embeddings: " + str(len(lines)))
+
+    cursor = _conn.cursor()
+    text_hash_mapping = {md5_hash(text): text for text in lines}
+    hashed_lines = list(text_hash_mapping.keys())
+
+    # No need to dedupe since we're using a set to create the hash mapping
+    batch_size = 500
     all_embeddings = []
     embeddings_dict = {}
-    
-    # Create a cursor object to interact with the database
-    cursor = _conn.cursor()
 
-    # De-dupe the text_list
-    text_list_deduped = list(set(text_list_truncated))
+    for i in range(0, len(hashed_lines), batch_size):
+        batch_hashes = hashed_lines[i:i + batch_size]
 
-    for i in range(0, len(text_list_deduped), batch_size):
-        batch = text_list_deduped[i:i + batch_size]
-
-        query = "SELECT input, embedding FROM ada_cache WHERE input = ANY(%s)"
-        cursor.execute(query, (batch,))
+        query = "SELECT hash, embedding FROM ada_cache2 WHERE hash = ANY(%s)"
+        if debug:
+            print("checking cache")
+        cursor.execute(query, (batch_hashes,))
         cached_results = cursor.fetchall()
 
         # Separate the cached and uncached items
-        cached_dict = {item[0]: item[1] for item in cached_results}
-        uncached_texts = [text for text in batch if text not in cached_dict]
+        cached_hashes = {item[0]: item[1] for item in cached_results}
+        uncached_hashes = [hash for hash in batch_hashes if hash not in cached_hashes]
 
-        # Fetch embeddings for uncached items
-        if uncached_texts:
+        if uncached_hashes:
+            uncached_texts = [text_hash_mapping[hash] for hash in uncached_hashes]
+            if debug:
+                print("uncached: " + str(len(uncached_texts)))
             try:
+                if debug:
+                    print("calling openai")
                 result = openai.embeddings.create(model='text-embedding-ada-002', input=uncached_texts)
             except Exception as e:
                 raise e
                         
             uncached_embeddings = [item.embedding for item in result.data]
 
-            # Store the new embeddings in the database for future use
-            for text, embedding in zip(uncached_texts, uncached_embeddings):
-                embedding_str = ','.join(map(str, embedding))
-                embedding_str = f'[{embedding_str}]'
-                #cursor.execute("INSERT INTO ada_cache (input, embedding) VALUES (%s, %s)", (text, embedding_str))
-                cursor.execute("INSERT INTO ada_cache (input, embedding) VALUES (%s, %s) ON CONFLICT DO NOTHING", (text, embedding_str))                
+            if debug:
+                print("inserting into cache")
 
-            embeddings_dict.update({text: embedding for text, embedding in zip(uncached_texts, uncached_embeddings)})
+            records_to_insert = [
+                (hash, f'[{",".join(map(str, embedding))}]')
+                for hash, embedding in zip(uncached_hashes, uncached_embeddings)
+            ]
 
-        # Add the cached embeddings to the dictionary
-        embeddings_dict.update({text: list(map(float, cached_dict[text][1:-1].split(','))) for text in batch if text in cached_dict})
+            insert_query = """
+            INSERT INTO ada_cache2 (hash, embedding)
+            VALUES (%s, %s)
+            ON CONFLICT DO NOTHING
+            """
 
-    # Map the original text_list into the dictionary to get embeddings in order
-    all_embeddings = [embeddings_dict[text] for text in text_list_truncated]
+            cursor.executemany(insert_query, records_to_insert)
+            _conn.commit()
+            embeddings_dict.update({hash: embedding for hash, embedding in zip(uncached_hashes, uncached_embeddings)})
 
-    # Close the cursor
+        embeddings_dict.update({hash: list(map(float, cached_hashes[hash][1:-1].split(','))) for hash in batch_hashes if hash in cached_hashes})
+
+    all_embeddings = [embeddings_dict[md5_hash(text)] for text in lines]
     cursor.close()
     _conn.commit()
+
+    if debug:
+        print("returning embeddings")
+
+    if(len(all_embeddings) != len(lines)):
+        raise Exception("Number of embeddings does not match number of lines")
 
     return np.array(all_embeddings)
 
@@ -97,6 +122,8 @@ def getCompositeVector(expressionString: str, _conn):
     # if list items are strings
     if all(isinstance(item, str) for item in terms):
         vectors = get_embeddings(terms, _conn)
+        mean = np.mean(vectors, axis=0)
+        return mean / np.linalg.norm(mean)
     # else if the list items are numbers that can be cast to floats
     elif all(isinstance(item, int) or isinstance(item, float) for item in terms):
         if(len(terms) != 1536):
@@ -104,8 +131,6 @@ def getCompositeVector(expressionString: str, _conn):
         return list(np.array(terms))
     else:
         raise Exception("Expression string must include an array of strings or numbers")
-    mean = np.mean(vectors, axis=0)
-    return mean / np.linalg.norm(mean)
 
 def getFieldName(input: str):
     if(len(input) < 2 or input[0] != '!'):

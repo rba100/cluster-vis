@@ -6,19 +6,24 @@ import plotly.express as px
 import streamlit as st
 
 @st.cache_data(max_entries=4)
-def get_tsne_data(embeddings, dimensions=2, random_state=42):
+def get_tsne_data(embeddings, dimensions=2, random_state=42, early_exaggeration=12.0):
 
     # Perform t-SNE dimensionality reduction
     perplexity = max(1,min(25, len(embeddings) - 1))
     learning_rate = max(1, min(200, len(embeddings) // 10))
 
-    tsne = TSNE(n_components=dimensions, perplexity=perplexity, metric="cosine", learning_rate=learning_rate, random_state=random_state)
+    tsne = TSNE(n_components=dimensions,
+                perplexity=perplexity,
+                early_exaggeration=early_exaggeration,
+                metric="cosine",
+                learning_rate=learning_rate,
+                random_state=random_state)
     X_tsne = tsne.fit_transform(embeddings)
 
     return X_tsne
 
 @st.cache_data(max_entries=4)
-def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensions=2):
+def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensions=2, height=1000):
     if dimensions not in [2, 3, 4]:
         raise ValueError("dimensions must be 2 or 3, or... 4")
 
@@ -74,12 +79,12 @@ def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensio
             )
 
     # Update layout and title
-    fig.update_layout(        
+    fig.update_layout(
         autosize=False,
-        width=800,
-        height=1000,
-        margin=dict(l=50, r=50, b=100, t=100, pad=4),
-        legend=dict(
+        # width=1000,
+        height=height,
+        #margin=dict(l=50, r=50, b=100, t=100, pad=4),
+        legend=dict( 
             title='Cluster Descriptions',
             orientation="h",
             y=-0.15,  # position the legend below the plot
