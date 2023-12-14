@@ -6,3 +6,4 @@
 # Python stuff
 __pycache__/*
 .streamlit/secrets.toml
+.vscode/settings.json
