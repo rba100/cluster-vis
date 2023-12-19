@@ -3,8 +3,11 @@ import sys
 import subprocess
 from joblib import Memory
 import pandas as pd
+
 from metadata.columns import getColumnMetadataExcel
-from stats.coincidenceAnalysis import coincidence_analysis_report, summarise_analysis_report, generate_charts_for_summary, generate_summary_with_charts
+from stats.coincidenceAnalysis import getCoincidenceStats
+from generativeai.summarise import summariseStats
+from generativeai.charts import getPythonForCharts, insertChartsIntoSummary
 
 if(len(sys.argv) < 2):
     print("Missing file name argument")
@@ -25,31 +28,32 @@ def getMetadata(fileName):
 @memory.cache
 def getSummary(report):
     print("Getting summary")
-    return summarise_analysis_report(report)
+    return summariseStats(report)
 
 @memory.cache
 def getReport(fileName, metadata):
     print("Getting stats report")
     table = pd.read_excel(fileName, na_filter=None, keep_default_na=False, dtype=str, sheet_name=0)
-    return coincidence_analysis_report(table, metadata)
+    return getCoincidenceStats(table, metadata)
 
 @memory.cache
 def getCharts(summary):
     print("Getting chart python code")
-    return generate_charts_for_summary(summary)
+    return getPythonForCharts(summary)
 
 @memory.cache
 def getSummaryWithCharts(summary, charts):
     print("Getting summary with charts")
-    return generate_summary_with_charts(summary, charts)
+    return insertChartsIntoSummary(summary, charts)
 
 metadata = getMetadata(fileName)
 report = getReport(fileName, metadata)
 summary = getSummary(report)
 charts = getCharts(summary)
 
-os.makedirs("out", exist_ok=True)
-os.makedirs("out/images", exist_ok=True)
+if os.path.exists("out"):
+    os.removedirs("out")
+os.makedirs("out/images")
 
 # write report, summary, charts to report.txt summary.md and charts.py
 with open("out/stats.txt", "w") as f:
