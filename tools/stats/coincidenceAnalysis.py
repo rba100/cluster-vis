@@ -46,7 +46,7 @@ def coincidence_analysis_report(df, metadata):
 def summarise_analysis_report(report: str):
     client = OpenAI()
     systemMessage = ""
-    userMessage = f"```\n{report}\n```\nWrite a summary of insights from this data. Pay close attention to the percentage, as the chi2 and p might not be very relevant"
+    userMessage = f"```\n{report}\n```\nWrite a summary of insights from this data. Pay close attention to the percentage, with chi2 and p being secondary indicators."
     messages = [{"role": "system", "content": systemMessage}, {"role": "user", "content": userMessage}]
 
     response = client.chat.completions.create(
