@@ -19,23 +19,28 @@ memory = Memory(location='.', verbose=0)
 
 @memory.cache
 def getMetadata(fileName):
+    print("Getting metadata")
     return getColumnMetadataExcel(fileName)
 
 @memory.cache
 def getSummary(report):
+    print("Getting summary")
     return summarise_analysis_report(report)
 
 @memory.cache
 def getReport(fileName, metadata):
+    print("Getting stats report")
     table = pd.read_excel(fileName, na_filter=None, keep_default_na=False, dtype=str, sheet_name=0)
     return coincidence_analysis_report(table, metadata)
 
 @memory.cache
 def getCharts(summary):
+    print("Getting chart python code")
     return generate_charts_for_summary(summary)
 
 @memory.cache
 def getSummaryWithCharts(summary, charts):
+    print("Getting summary with charts")
     return generate_summary_with_charts(summary, charts)
 
 metadata = getMetadata(fileName)
@@ -57,12 +62,13 @@ with open("out/charts.py", "w") as f:
 subprocess.run(["python", "charts.py"], cwd="out")
 
 # get image names without subfolder using os to enumerate dir contents
-imageNames = [f for f in os.listdir("out/images") if os.path.isfile(os.path.join("out/images", f))]
+imageNames = [f for f in os.listdir("out/images") if f.endswith(".png")]
 imageNames = [f.replace("\\", "/") for f in imageNames]
-imageNames = [f.split("/")[-1] for f in imageNames]
+imageNames = set([f.split("/")[-1] for f in imageNames])
+print(imageNames)
 
 if(len(imageNames) > 0):
-    summaryWithImages = getSummaryWithCharts(summary, set(imageNames))
+    summaryWithImages = getSummaryWithCharts(summary, imageNames)
     with open("out/summary.md", "w") as f:
         f.write(summaryWithImages)
 

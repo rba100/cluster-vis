@@ -64,9 +64,9 @@ def summarise_analysis_report(report: str):
 def generate_charts_for_summary(summary: str):
     client = OpenAI()
     systemMessage = "You are an expert market researcher and python programmer."
-    userMessage = f"```\n{summary}\n```\nWrite python code to go with insights from this summary." + \
+    userMessage = f"```\n{summary}\n```\nWrite python code to generate charts to go with insights from this summary. Charts should use colour to distinguish categories when relevant." + \
          " The code should use plotly to generate professional looking charts. The charts should not have built-it titles." + \
-         " Reply in a code block with nothing before or after the code block: only write code as your output will be copied to a file. The code should save the images in a subfolder 'images' and not show them."
+         " Reply in a code block with nothing before or after the code block: only write code as your output will be copied to a file. The code should save the images as png in a subfolder 'images' and not show them."
     messages = [{"role": "system", "content": systemMessage}, {"role": "user", "content": userMessage}]
 
     response = client.chat.completions.create(
@@ -76,11 +76,17 @@ def generate_charts_for_summary(summary: str):
     pythonCode = response.choices[0].message.content.strip("`\n\t ").strip()
     if pythonCode.startswith("python"):
         pythonCode = pythonCode[6:].strip()
+
+    if "\n```\n" in pythonCode:
+        pythonCode = pythonCode.split("\n```\n")[0]
+
     return pythonCode
 
 def generate_summary_with_charts(summary:str, chartNames: set[str]):
     client = OpenAI()
     summaryLines = summary.split("\n")
+    if(summaryLines[-1] != ""):
+        summaryLines.append("")
     padding = len(str(len(summaryLines)))
     numberedLines = [f"{str(i).rjust(padding)}: {line}" for i, line in enumerate(summaryLines, 1)]
     numberedSummary = "\n".join(numberedLines)
@@ -109,7 +115,7 @@ def generate_summary_with_charts(summary:str, chartNames: set[str]):
         }
     }
 
-    userMessage = f"```\n{numberedSummary}\n```\nInsert images into the summary based on the image name, at the end of the relevant section (to place an image at the end of the document use max index + 1). Images: `{'`, `'.join(chartNames)}`."
+    userMessage = f"```\n{numberedSummary}\n```\nInsert images into the summary based on the image name, ideally at the end of the relevant subsection. Don't insert images in bullet lists, perfer right before the end of a subsection. Images: `{'`, `'.join(chartNames)}`."
     messages = [{"role": "system", "content": "You are an expert market researcher"}, {"role": "user", "content": userMessage}]
 
     response = client.chat.completions.create(
