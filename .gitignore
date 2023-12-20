@@ -8,3 +8,4 @@
 .streamlit/secrets.toml
 **/joblib/
 .vscode/settings.json
+tools/out
