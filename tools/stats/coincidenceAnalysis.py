@@ -27,15 +27,12 @@ def getCoincidenceStats(df, metadata):
 
     # Iterate over each enum and bit flag column to check for correlations
     for enum_col in enum_columns:
-        unique_values = df[enum_col].unique()
-        for unique_value in unique_values:
-            for bit_col in bit_columns:
-                # Create a contingency table for each unique value
-                table = pd.crosstab(df[enum_col] == unique_value, df[bit_col])
-
-                # Perform Chi-square test
-                chi2, p, dof, _ = chi2_contingency(table)
-
+        for bit_col in bit_columns:
+            table = pd.crosstab(df[enum_col], df[bit_col])
+            chi2, p, dof, _ = chi2_contingency(table)
+            
+            # Analyze each unique value in the enum column
+            for unique_value in df[enum_col].unique():
                 # Calculate the percentage
                 total = sum(df[enum_col] == unique_value)
                 if total > 0:
@@ -43,12 +40,13 @@ def getCoincidenceStats(df, metadata):
                 else:
                     percentage = 0
 
-                # Print out correlations with p-value < 0.05 and the percentage                
-                message = f"{enum_col} '{unique_value}' correlates with '{bit_col}'. Percentage: {percentage:.2f}%. Chi-square {chi2:.3f}, p-value: {p:.3f}."
+                # Prepare the report line
+                message = f"{enum_col} '{unique_value}' with '{bit_col}': Percentage: {percentage:.2f}%, Chi-square {chi2:.3f}, p-value: {p:.3f}."
                 if p < 0.05:
                     reportLines.append(message)
                 else:
                     insignificant.append(message)
+
     report = "\n".join(reportLines)
     insignificant = "\n".join(insignificant)
     return report, insignificant
