@@ -1,11 +1,14 @@
 import sys
 import pandas as pd
+from joblib import Memory
 from openai import OpenAI
 import json
 
 def printError(message, code):
     print(json.dumps({"error": message, "code": code}), file=sys.stderr)
     sys.exit(code)
+
+memory = Memory(location='.', verbose=0, bytes_limit=1*1024*1024)
 
 client = OpenAI()
 
@@ -18,7 +21,7 @@ classifyTool = {
             "type" : "object",
             "properties" : {
                 "name" : {"type" : "string"},
-                "type" : {"type" : "string", "enum" : [ "boolean", "classification", "range", "freeText", "other" ]}
+                "type" : {"type" : "string", "enum" : [ "boolean", "classification", "range", "freeText", "id", "other" ]}
             },
             "required" : ["name", "type"]
         }
@@ -36,11 +39,12 @@ def hardCodedColumnTypes(samples):
         return "classification"
     return None
 
-def classifyColumn(header, rowSamples: [str]):
+@memory.cache
+def classifyColumn(header: str, rowSamples: set[str]):
     systemPrompt = "You will classify a table column. The goal is to identify classification data and boolean data. " + \
                    " Classification is like gender, age-range, location or anything that is an enum. Booleans are yes/no 1/0 etc." + \
-                   " All other columns should be classed as 'other'." + \
-                   " Remember that numeric data is 'other' but not if its expressed as a range or category (then it's a classification).\n"
+                   " All other columns should be classed as 'other', including IDs." + \
+                   " Remember that numeric data is 'other', E.g. 'Age' is other, unless the rows are expressed as a range.\n"
     
     userMessage = f"ColumnName: {header}\nSample data for this column:\n" + "\n".join(rowSamples) + "\n"
     messages = [{"role": "system", "content": systemPrompt}, {"role": "user", "content": userMessage}]
@@ -70,12 +74,16 @@ def classifyColumn(header, rowSamples: [str]):
         return "classification"
     if(type == "freeText"):
         return "other"
+    if(type == "id"):
+        return "other"
     
     return type
 
 def getColumnMetadata(df):
     columnMetadata = {}
     for column in df.columns:
+        if(column == ""):
+            continue
         columnMetadata[column] = {}
         unqiueValues = df[column].unique()[:3]
 

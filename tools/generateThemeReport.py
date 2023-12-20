@@ -3,8 +3,11 @@ import sys
 import subprocess
 from joblib import Memory
 import pandas as pd
+from pandas import ExcelFile
+import json
+import shutil
 
-from metadata.columns import getColumnMetadataExcel
+from metadata.columns import getColumnMetadataExcel, getColumnMetadata
 from stats.coincidenceAnalysis import getCoincidenceStats
 from generativeai.summarise import summariseStats
 from generativeai.charts import getPythonForCharts, insertChartsIntoSummary
@@ -18,12 +21,17 @@ if not os.path.isfile(fileName):
     print("File does not exist")
     sys.exit(2)
 
-memory = Memory(location='.', verbose=0)
+sheetName = 0 if(len(sys.argv) < 3) else sys.argv[2]
+
+memory = Memory(location='.', verbose=0, bytes_limit=100*1024*1024)
 
 @memory.cache
-def getMetadata(fileName):
+def getMetadata(filePath, sheetName):
     print("Getting metadata")
-    return getColumnMetadataExcel(fileName)
+    if isinstance(filePath, str):
+        return getColumnMetadataExcel(filePath, sheetName)
+    else:
+        raise Exception("getMetadata requires a file path")
 
 @memory.cache
 def getSummary(report):
@@ -31,9 +39,9 @@ def getSummary(report):
     return summariseStats(report)
 
 @memory.cache
-def getReport(fileName, metadata):
+def getReport(fileName, metadata, sheetName):
     print("Getting stats report")
-    table = pd.read_excel(fileName, na_filter=None, keep_default_na=False, dtype=str, sheet_name=0)
+    table = pd.read_excel(fileName, na_filter=None, keep_default_na=False, dtype=str, sheet_name=sheetName)
     return getCoincidenceStats(table, metadata)
 
 @memory.cache
@@ -46,13 +54,13 @@ def getSummaryWithCharts(summary, charts):
     print("Getting summary with charts")
     return insertChartsIntoSummary(summary, charts)
 
-metadata = getMetadata(fileName)
-report = getReport(fileName, metadata)
+metadata = getMetadata(fileName, sheetName)
+report = getReport(fileName, metadata, sheetName)
 summary = getSummary(report)
 charts = getCharts(summary)
 
 if os.path.exists("out"):
-    os.removedirs("out")
+    shutil.rmtree("out")
 os.makedirs("out/images")
 
 # write report, summary, charts to report.txt summary.md and charts.py
