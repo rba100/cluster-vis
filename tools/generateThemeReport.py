@@ -25,7 +25,6 @@ sheetName = 0 if(len(sys.argv) < 3) else sys.argv[2]
 
 memory = Memory(location='.', verbose=0, bytes_limit=100*1024*1024)
 
-@memory.cache
 def getMetadata(filePath, sheetName):
     print("Getting metadata")
     if isinstance(filePath, str):
@@ -55,7 +54,7 @@ def getSummaryWithCharts(summary, charts):
     return insertChartsIntoSummary(summary, charts)
 
 metadata = getMetadata(fileName, sheetName)
-report = getReport(fileName, metadata, sheetName)
+report, insignificant = getReport(fileName, metadata, sheetName)
 summary = getSummary(report)
 charts = getCharts(summary)
 
@@ -63,10 +62,14 @@ if os.path.exists("out"):
     shutil.rmtree("out")
 os.makedirs("out/images")
 
-# write report, summary, charts to report.txt summary.md and charts.py
+# write metadata, report, summary, charts to report.txt summary.md and charts.py
+with open("out/metadata.json", "w") as f:
+    f.write(json.dumps(metadata, indent=4))
 with open("out/stats.txt", "w") as f:
     f.write(report)
-with open("out/summary.md", "w") as f:
+with open("out/insignificant.txt", "w") as f:
+    f.write(insignificant)
+with open("out/summary.md", "w", encoding="utf-8") as f:
     f.write(summary)
 with open("out/charts.py", "w") as f:
     f.write(charts)
@@ -81,7 +84,7 @@ print(imageNames)
 
 if(len(imageNames) > 0):
     summaryWithImages = getSummaryWithCharts(summary, imageNames)
-    with open("out/summary.md", "w") as f:
+    with open("out/summary.md", "w", encoding="utf-8") as f:
         f.write(summaryWithImages)
 
 subprocess.run(["mdpdf", "summary.md", "-o", "report.pdf"], cwd="out")

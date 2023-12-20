@@ -11,5 +11,4 @@ def summariseStats(report: str):
         messages=messages)
     
     content = response.choices[0].message.content
-    content = content.encode('utf-8', errors='replace').decode('utf-8')
     return content

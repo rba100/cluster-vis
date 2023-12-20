@@ -23,6 +23,7 @@ def getCoincidenceStats(df, metadata):
     df[bit_columns] = df[bit_columns].replace(r'^\s*$', 0, regex=True)
 
     reportLines = []
+    insignificant = []
 
     # Iterate over each enum and bit flag column to check for correlations
     for enum_col in enum_columns:
@@ -42,8 +43,12 @@ def getCoincidenceStats(df, metadata):
                 else:
                     percentage = 0
 
-                # Print out correlations with p-value < 0.05 and the percentage
+                # Print out correlations with p-value < 0.05 and the percentage                
+                message = f"{enum_col} '{unique_value}' correlates with '{bit_col}'. Percentage: {percentage:.2f}%. Chi-square {chi2:.3f}, p-value: {p:.3f}."
                 if p < 0.05:
-                    reportLines.append(f"{enum_col} '{unique_value}' correlates with '{bit_col}'. Percentage: {percentage:.2f}%. Chi-square {chi2:.3f}, p-value: {p:.3f}.")
-
-    return "\n".join(reportLines)
+                    reportLines.append(message)
+                else:
+                    insignificant.append(message)
+    report = "\n".join(reportLines)
+    insignificant = "\n".join(insignificant)
+    return report, insignificant

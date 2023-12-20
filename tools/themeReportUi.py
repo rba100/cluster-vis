@@ -48,7 +48,7 @@ if sheet is not None:
 
 if columnMetadata is not None:
     save(file.file_id, df, columnMetadata)
-    stats = getStats(file.file_id)
+    stats, _ = getStats(file.file_id)
     remove(file.file_id)
 
 if stats is not None and stats != "":

@@ -30,13 +30,16 @@ classifyTool = {
 
 tools = [classifyTool]
 
-def hardCodedColumnTypes(samples):
+def hardCodedColumnTypes(header: str, rowSamples: set[str]):
     # Booleans
     allBooleans = [set(["0","1"]), set(["","1"]), set(["1"]), set(["no", "yes"]), set(["", "yes"]), set("yes"), set("no")]
-    if set(samples) in allBooleans:
+    if set(rowSamples) in allBooleans:
         return "boolean"
-    if "male" in [s.lower() for s in samples]:
+    if "male" in [s.lower() for s in rowSamples]:
         return "classification"
+
+    if all([s.isnumeric() for s in rowSamples]):
+        return "other"
     return None
 
 @memory.cache
@@ -85,9 +88,9 @@ def getColumnMetadata(df):
         if(column == ""):
             continue
         columnMetadata[column] = {}
-        unqiueValues = df[column].unique()[:3]
+        unqiueValues = set(df[column].unique()[:3])
 
-        hardCodedClass = hardCodedColumnTypes(unqiueValues)
+        hardCodedClass = hardCodedColumnTypes(column, unqiueValues)
         if(hardCodedClass):
             columnMetadata[column]["type"] = hardCodedClass
             columnMetadata[column]["classifiedBy"] = "hardcoded"
