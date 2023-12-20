@@ -55,8 +55,8 @@ def getSummaryWithCharts(summary, charts):
 
 metadata = getMetadata(fileName, sheetName)
 report, insignificant = getReport(fileName, metadata, sheetName)
-summary = getSummary(report)
-charts = getCharts(summary)
+summary = getSummary(report) if report.strip() != "" else ""
+charts = getCharts(summary) if summary.strip() != "" else ""
 
 if os.path.exists("out"):
     shutil.rmtree("out")
@@ -74,7 +74,8 @@ with open("out/summary.md", "w", encoding="utf-8") as f:
 with open("out/charts.py", "w") as f:
     f.write(charts)
 
-subprocess.run(["python", "charts.py"], cwd="out")
+if charts != "":
+    subprocess.run(["python", "charts.py"], cwd="out")
 
 # get image names without subfolder using os to enumerate dir contents
 imageNames = [f for f in os.listdir("out/images") if f.endswith(".png")]

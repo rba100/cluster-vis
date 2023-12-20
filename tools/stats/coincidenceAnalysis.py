@@ -41,7 +41,7 @@ def getCoincidenceStats(df, metadata):
                     percentage = 0
 
                 # Prepare the report line
-                message = f"{enum_col} '{unique_value}' with '{bit_col}': Percentage: {percentage:.2f}%, Chi-square {chi2:.3f}, p-value: {p:.3f}."
+                message = f"{enum_col} '{unique_value}' with '{bit_col}': Percentage: {percentage:.2f}%, Chi^2 {chi2:.3f}, p-value: {p:.3f}."
                 if p < 0.05:
                     reportLines.append(message)
                 else:
