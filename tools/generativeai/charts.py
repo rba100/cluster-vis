@@ -9,8 +9,8 @@ def printError(message, code):
 def getPythonForCharts(summary: str):
     client = OpenAI()
     systemMessage = "You are an expert market researcher and python programmer."
-    userMessage = f"```\n{summary}\n```\nWrite python code to generate charts to go with insights from this summary. Charts should use colour to distinguish categories when relevant." + \
-         " The code should use plotly to generate professional looking charts. The charts should not have built-it titles. When plotting multiple classifications order them appropriately." + \
+    userMessage = f"```\n{summary}\n```\nWrite python code to generate charts to go with insights from this summary. Charts should use colour to distinguish categories when relevant. For very volumuous data you can use a heatmap. " + \
+         " The code should use plotly where possible to generate professional looking charts. The charts should not have built-it titles. When plotting multiple classifications order them appropriately." + \
          " Reply in a code block with nothing before or after the code block: only write code as your output will be copied to a file. The code should save the images as png in a subfolder 'images' and not show them."
     messages = [{"role": "system", "content": systemMessage}, {"role": "user", "content": userMessage}]
 
