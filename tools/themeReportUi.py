@@ -1,5 +1,6 @@
 import streamlit as st
 from joblib import Memory
+import json
 import pandas as pd
 from metadata.columns import getColumnMetadata
 from stats.coincidenceAnalysis import getCoincidenceStats
@@ -21,17 +22,19 @@ def remove(key):
 def getStats(key):
     df = globalStore[key]
     metadata = globalStore[key + "_metadata"]
-    return getCoincidenceStats(df, metadata)
+    stats, ignoredStats = getCoincidenceStats(df, metadata)
+    return stats, ignoredStats
 
 @memory.cache
 def getSummary(report):
-    return summariseStats(report)
+    return summariseStats(report, model="gpt-4-1106-preview")
 
 sheet = None
 df = None
 columnMetadata = None
 columnMetadataOverrides = None
 stats = None
+ignoredStats = None
 summary = None
 
 st.header("Theme Report")
@@ -45,11 +48,17 @@ if file is not None:
 if sheet is not None:
     df = pd.read_excel(excelFile, na_filter=None, keep_default_na=False, dtype=str, sheet_name=sheet)
     columnMetadata = getColumnMetadata(df)
+    with st.expander("Column metadata", expanded=False):
+        st.text(json.dumps(columnMetadata, indent=4))
 
 if columnMetadata is not None:
-    save(file.file_id, df, columnMetadata)
-    stats, _ = getStats(file.file_id)
-    remove(file.file_id)
+    save(file.name, df, columnMetadata)
+    stats, ignoredStats = getStats(file.name)
+    remove(file.name)
+    with st.expander("Stats", expanded=False):
+        st.text(stats)
+    with st.expander("Ignored stats", expanded=False):
+        st.text(ignoredStats)
 
 if stats is not None and stats != "":
     generateReport = st.button("Generate summary")
