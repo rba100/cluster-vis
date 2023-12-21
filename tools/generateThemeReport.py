@@ -44,9 +44,9 @@ def getReport(fileName, metadata, sheetName):
     return getCoincidenceStats(table, metadata)
 
 @memory.cache
-def getCharts(summary):
+def getCharts(summary, stats):
     print("Getting chart python code")
-    return getPythonForCharts(summary)
+    return getPythonForCharts(summary, stats)
 
 @memory.cache
 def getSummaryWithCharts(summary, charts):
