@@ -86,6 +86,7 @@ def insertChartsIntoSummary(summary:str, chartNames: set[str]):
         imageName = index["imageName"]
         friendlyImageName = imageName.replace("_", " ").replace(".png", "")
         friendlyImageName = " ".join([word.capitalize() for word in friendlyImageName.split(" ")])
-        summaryLines.insert(lineNumber, f"![{friendlyImageName}](images/{imageName})")
+        # Need an extra \n because the mdpdf tool renders images too small if they are right after certain featuyres.
+        summaryLines.insert(lineNumber, f"\n![{friendlyImageName}](images/{imageName})")
 
     return "\n".join(summaryLines)

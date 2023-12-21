@@ -6,8 +6,6 @@ from metadata.columns import getColumnMetadata
 from stats.coincidenceAnalysis import getCoincidenceStats
 from generativeai.summarise import summariseStats
 
-#st.set_page_config(layout="wide")
-
 memory = Memory(location='.', verbose=0, bytes_limit=100*1024*1024)
 
 globalStore = {}
