@@ -7,22 +7,19 @@ import pandas as pd
 from metadata.columns import getColumnMetadata
 from stats.coincidenceAnalysis import getCoincidenceStats
 from generativeai.summarise import summariseStats
-from generativeai.charts import getPythonForCharts
+from generativeai.charts import getPythonForCharts, insertChartsIntoSummary
 
 memory = Memory(location='.', verbose=0, bytes_limit=100*1024*1024)
 
 globalStore = {}
 def save(key, dataframe, metadata):
     globalStore[key] = dataframe
-    globalStore[key + "_metadata"] = metadata
 def remove(key):
     globalStore.pop(key, None)
-    globalStore.pop(key + "_metadata", None)
 
 @memory.cache
 def getStats(key, metadata):
     df = globalStore[key]
-    #metadata = globalStore[key + "_metadata"]
     stats, ignoredStats = getCoincidenceStats(df, metadata)
     return stats, ignoredStats
 
@@ -31,8 +28,12 @@ def getSummary(report):
     return summariseStats(report, model="gpt-4-1106-preview")
 
 @memory.cache
-def getPython(summary):
-    return getPythonForCharts(summary)
+def getPython(summary, stats):
+    return getPythonForCharts(summary, stats)
+
+@memory.cache
+def getSummaryWithCharts(summary, images):
+    return insertChartsIntoSummary(summary, images)
 
 sheet = None
 df = None
@@ -49,6 +50,9 @@ if "summary" not in st.session_state:
     st.session_state["summary"] = None
 if "images" not in st.session_state:
     st.session_state["images"] = []
+if "combinedReport" not in st.session_state:
+    st.session_state["combinedReport"] = None
+combinedReport = st.session_state["combinedReport"]
 
 st.header("Theme Report")
 
@@ -62,7 +66,7 @@ if sheet is not None:
     df = pd.read_excel(excelFile, na_filter=None, keep_default_na=False, dtype=str, sheet_name=sheet)
     columnMetadata = getColumnMetadata(df)
     columnMetadataOverrides = {}
-    with st.expander("Column metadata", expanded=False):
+    with st.expander("Columns", expanded=False):
         for key, value in columnMetadata.items():
             columnMetadataOverrides[key] = {}
             columnMetadataOverrides[key]["type"] = st.selectbox(key, classificationTypes, index=classificationTypes.index(value["type"]))
@@ -85,20 +89,32 @@ if stats is not None and stats != "":
 
 if st.session_state["summary"] is not None:
     generateImages = st.button("Generate images")
-    st.markdown(st.session_state["summary"], unsafe_allow_html=False)
 
 if generateImages:
-    pythonCode = getPython(st.session_state["summary"])
+    pythonCode = getPython(st.session_state["summary"], stats)
     folderPath = ".temp/" + file.name
     imagesFolderPath = folderPath + "/images"
     if not os.path.exists(imagesFolderPath):
         os.makedirs(imagesFolderPath)
-    with open(folderPath + "/charts.py", "w") as f:
+    with open(folderPath + "/charts.py", "w", encoding="utf-8") as f:
         f.write(pythonCode)
     subprocess.run(["python", "charts.py"], cwd=folderPath)
     images = os.listdir(imagesFolderPath)
     st.session_state["images"] = [imagesFolderPath + "/" + image for image in images]
+    combinedMd = getSummaryWithCharts(st.session_state["summary"], st.session_state["images"])
+    with open(folderPath + "/combined.md", "w", encoding="utf-8") as f:
+        f.write(combinedMd)
+    subprocess.run(["mdpdf", "combined.md", "-o", "report.pdf"], cwd=folderPath)
+    with open(folderPath + "/report.pdf", "rb") as f:
+        combinedReport = f.read()
+        st.session_state["combinedReport"] = combinedReport
+
+if st.session_state["combinedReport"] is not None or combinedReport is not None:
+    report = combinedReport if combinedReport is not None else st.session_state["combinedReport"]
+    st.download_button('Download Report', report, file.name + ".pdf", mime="application/pdf")  
+
+if st.session_state["summary"] is not None:
+    st.markdown(st.session_state["summary"], unsafe_allow_html=False)
 
 for image in st.session_state["images"]:
-    st.image(image, use_column_width=True)
-    
+    st.image(image, use_column_width=True, caption=image)

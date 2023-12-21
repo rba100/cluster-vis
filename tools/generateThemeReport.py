@@ -56,7 +56,7 @@ def getSummaryWithCharts(summary, charts):
 metadata = getMetadata(fileName, sheetName)
 report, insignificant = getReport(fileName, metadata, sheetName)
 summary = getSummary(report) if report.strip() != "" else ""
-charts = getCharts(summary) if summary.strip() != "" else ""
+charts = getCharts(summary, report) if summary.strip() != "" else ""
 
 if os.path.exists("out"):
     shutil.rmtree("out")
