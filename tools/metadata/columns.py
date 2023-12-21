@@ -39,7 +39,7 @@ def hardCodedColumnTypes(header: str, rowSamples: set[str]):
         return "classification"
 
     if all([s.isnumeric() for s in rowSamples]):
-        return "other"
+        return "ignored"
     return None
 
 @memory.cache
@@ -70,15 +70,17 @@ def classifyColumn(header: str, rowSamples: set[str]):
     if(tool_call.function.name != "classify"):
         printError("Tool call was not classify", 1)
     function_args = json.loads(tool_call.function.arguments)
-    type = function_args.get("type", "other")
+    type = function_args.get("type", "ignored")
 
     # Handle decoy types
     if(type == "range"):
         return "classification"
     if(type == "freeText"):
-        return "other"
+        return "ignored"
     if(type == "id"):
-        return "other"
+        return "ignored"
+    if(type == "other"):
+        return "ignored"
     
     return type
 
