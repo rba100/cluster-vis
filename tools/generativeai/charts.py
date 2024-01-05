@@ -10,7 +10,7 @@ def getPythonForCharts(summary: str, stats: str):
     client = OpenAI()
     systemMessage = "You are an expert market researcher and python programmer."
     userMessage = f"```\nSTATS\n{stats}\nSUMAMRY:\n{summary}\n```\nWrite python code to generate charts to go with insights from the text SUMMARY (stats provided for just for reference, percentages are independent and cannot be summed). Charts should use colour to distinguish categories when relevant, always prefering to use primary colour if there's only one or two classes. For very volumuous data you can use a heatmap. " + \
-         " The code should use plotly where possible to generate professional looking charts. The charts should not have built-it titles. When listing categories, ensure they are in an order than makes sense." + \
+         " The code should generate professional looking charts. The charts should not have built-it titles. When listing categories, ensure they are in an order than makes sense." + \
          " Reply in a code block with nothing before or after the code block: only write code as your output will be copied to a file. The code should save the images as png in a subfolder 'images' and not show them." + \
          " Style guide colours: Primaries: Pink #F5AEB3 and Black #000000 (and grey tints 10%/25%/50%/75%) for most charts. Secondary colours: #5DAED4 #5EA19B #7F6BA8 #F6AA57 #0E5066 #E2585C if many colours needed. Chart background 10%/grey"
     messages = [{"role": "system", "content": systemMessage}, {"role": "user", "content": userMessage}]

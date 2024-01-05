@@ -12,9 +12,9 @@ from generativeai.charts import getPythonForCharts, insertChartsIntoSummary
 memory = Memory(location='.', verbose=0, bytes_limit=100*1024*1024)
 
 globalStore = {}
-def save(key, dataframe, metadata):
+def preGetStats(key, dataframe, metadata):
     globalStore[key] = dataframe
-def remove(key):
+def postGetStats(key):
     globalStore.pop(key, None)
 
 @memory.cache
@@ -37,12 +37,14 @@ def getSummaryWithCharts(summary, images):
 
 sheet = None
 df = None
+initialDf = None
 columnMetadata = None
 columnMetadataOverrides = None
 stats = None
 ignoredStats = None
 summary = None
 generateImages = False
+filterQuery = ""
 classificationSources = ["hardcoded", "openai", "user"]
 classificationTypes = ["ignored", "classification", "boolean"]
 
@@ -63,7 +65,8 @@ if file is not None:
     sheet = st.selectbox("Select sheet", excelFile.sheet_names)
 
 if sheet is not None:
-    df = pd.read_excel(excelFile, na_filter=None, keep_default_na=False, dtype=str, sheet_name=sheet)
+    initialDf = pd.read_excel(excelFile, na_filter=None, keep_default_na=False, dtype=str, sheet_name=sheet)
+    df = initialDf
     columnMetadata = getColumnMetadata(df)
     columnMetadataOverrides = {}
     with st.expander("Columns", expanded=False):
@@ -72,11 +75,19 @@ if sheet is not None:
             columnMetadataOverrides[key]["type"] = st.selectbox(key, classificationTypes, index=classificationTypes.index(value["type"]))
             isChanged = columnMetadataOverrides[key]["type"] != columnMetadata[key]["type"]
             columnMetadataOverrides[key]["classifiedBy"] = "user" if isChanged else columnMetadata[key]["classifiedBy"]
+    filterQuery = st.text_input("Filter query", value="")
+
+if filterQuery != "":
+    try:
+        df = initialDf.query(filterQuery)
+    except Exception as e:
+        st.error(e)
 
 if columnMetadataOverrides is not None:
-    save(file.name, df, columnMetadataOverrides)
-    stats, ignoredStats = getStats(file.name, columnMetadataOverrides)
-    remove(file.name)
+    key = file.name + str(columnMetadataOverrides) + filterQuery
+    preGetStats(key, df, columnMetadataOverrides)
+    stats, ignoredStats = getStats(key, columnMetadataOverrides)
+    postGetStats(key)
     with st.expander("Stats", expanded=False):
         st.text(stats)
     with st.expander("Ignored stats", expanded=False):
