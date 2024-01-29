@@ -1,6 +1,8 @@
-import openai
+from openai import OpenAI
 import concurrent.futures
 import streamlit as st
+
+client = OpenAI()
 
 model = "gpt-3.5-turbo"
 
@@ -30,7 +32,7 @@ These have been matched against the words: {labels}.
 Give a name for a master label that encompasses the words are in the context of the samples (or a description of the common theme if the words are unhelpful).
 """
 
-    completion = openai.chat.completions.create(model=model,  temperature=0, messages=[
+    completion = client.chat.completions.create(model=model,  temperature=0, messages=[
         {"role":"system","content":"en-GB. You name categories. Reply only with one word (or a short noun phrase if one word doesn't cut it)."},
         {"role": "user", "content": prompt}])
     content =  completion.choices[0].message.content.rstrip('.')
@@ -50,7 +52,7 @@ Give a list of themes that a market researching could look for in responses. Ign
 reply with a list of themes, one for each cluster. Do not write anything else, just write one theme per line of text returned. Write only the headline of the theme, do not write any description or explanation. If you are not sure what to write for a given input, return the original string for that theme.
 """
 
-    completion = openai.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}])
+    completion = client.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}])
     lines = completion.choices[0].message.content.split("\n")
     if(len(lines) != len(text_array)):
         raise Exception("Number of lines returned does not match number of clusters")

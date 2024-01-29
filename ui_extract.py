@@ -1,5 +1,5 @@
 import streamlit as st
-from vectorclient import get_embeddings, reflect_vector
+from vectorclient import get_embeddings, reflect_vector, reflect_vector_partial
 from gptclient import generate_cluster_names_many, name_clusters_array
 from clusterclient import get_clusters
 from vectordbclient import get_closest_words
@@ -29,6 +29,9 @@ def main():
 
     if 'early_exaggeration' not in st.session_state:
         st.session_state.early_exaggeration = 12.0
+
+    if 'reflectionFactor' not in st.session_state:
+        st.session_state.reflectionFactor = 1.0
 
     if('n_clusters' not in st.session_state):
         st.session_state.n_clusters = 8
@@ -103,6 +106,8 @@ def main():
             st.session_state.randomSeed = st.number_input("Random seed", min_value=0, value=42)
             st.caption("You can try navigating the data in 3d, but it won't make things easier. It's just for fun.")
             st.session_state.use3d = st.checkbox("Use 3D plot", False)
+            reflectionFactorKey, reflectionFactorUpdate = value_persister("reflectionFactor")
+            st.slider("Reflection factor", 0.5, 1.0, 0.5, 0.01, help="How strong concept removal is.", key=reflectionFactorKey, on_change=reflectionFactorUpdate)
 
     dimensions = 3 if st.session_state.use3d else 2
 
@@ -125,8 +130,9 @@ def main():
         if (isGenerate):
             st.session_state.data_vectors = get_embeddings(string_list, conn)
             if(st.session_state.removeConceptText.strip() != ""):
+                reflectionFactor = st.session_state.reflectionFactor
                 vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
-                st.session_state.data_vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.data_vectors, vectorToRemove)
+                st.session_state.data_vectors = np.apply_along_axis(reflect_vector_partial, 1, st.session_state.data_vectors, vectorToRemove, reflectionFactor)
             labels, descriptions, centroids = get_clusters(conn,
                                                            st.session_state.clusteringAlgorithm,
                                                            st.session_state.data_vectors,

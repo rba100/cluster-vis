@@ -1,8 +1,15 @@
-import openai
+from openai import OpenAI
 import numpy as np
 import streamlit as st
 import json
 import hashlib
+
+client = OpenAI()
+
+embeddingModel = "text-embedding-3-large"
+embeddingsTablename = "openai3large256"
+embeddingCacheTableName = embeddingsTablename + "_cache"
+embeddingVectorSize = 256
 
 debug = False
 
@@ -27,7 +34,7 @@ def get_embeddings(lines, _conn):
     for i in range(0, len(hashed_lines), batch_size):
         batch_hashes = hashed_lines[i:i + batch_size]
 
-        query = "SELECT hash, embedding FROM ada_cache2 WHERE hash = ANY(%s)"
+        query = f"SELECT hash, embedding FROM {embeddingCacheTableName} WHERE hash = ANY(%s)"
         if debug:
             print("checking cache")
         cursor.execute(query, (batch_hashes,))
@@ -44,7 +51,10 @@ def get_embeddings(lines, _conn):
             try:
                 if debug:
                     print("calling openai")
-                result = openai.embeddings.create(model='text-embedding-ada-002', input=uncached_texts)
+                result = client.embeddings.create(
+                    dimensions=embeddingVectorSize,
+                    model=embeddingModel,
+                    input=uncached_texts)
             except Exception as e:
                 raise e
                         
@@ -58,8 +68,8 @@ def get_embeddings(lines, _conn):
                 for hash, embedding in zip(uncached_hashes, uncached_embeddings)
             ]
 
-            insert_query = """
-            INSERT INTO ada_cache2 (hash, embedding)
+            insert_query = f"""
+            INSERT INTO {embeddingCacheTableName} (hash, embedding)
             VALUES (%s, %s)
             ON CONFLICT DO NOTHING
             """
@@ -86,6 +96,12 @@ def reflect_vector(normal, target):
     # Reflects target across the plane orthogonal to normal
     # Both vectors should be normalized and have the same dimension
     return -target + 2 * np.dot(target, normal) * normal
+
+def reflect_vector_partial(normal, target, reflection_factor):
+    # Reflects target across the plane orthogonal to normal
+    # by a factor specified by reflection_factor (0 to 1)
+    # Both vectors should be normalized and have the same dimension
+    return (1 - reflection_factor) * target + reflection_factor * (-target + 2 * np.dot(target, normal) * normal)
 
 def getMidVector(v1, v2):
     # Calculate the vector that is the sum of v1 and v2
