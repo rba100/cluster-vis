@@ -47,7 +47,7 @@ def main():
         st.text_input("Common concept in all data (optional, experimental)",
                       key=removeConceptKey,
                       on_change=removeConceptUpdate,
-                      help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
+                      help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. When experimenting with this, try turninig off OpenAI cluster naming to ensure underlying cluster concepts aren't gibberish.")
         isGenerate = st.button("Render")
 
         with st.expander("Automatic cluster identification", expanded=False):

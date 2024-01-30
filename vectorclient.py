@@ -4,7 +4,6 @@ import streamlit as st
 import json
 import hashlib
 
-debug = False
 client = OpenAI()
 
 def md5_hash(text):
@@ -13,14 +12,11 @@ def md5_hash(text):
 
 @st.cache_data(max_entries=4, experimental_allow_widgets=True, show_spinner=False)
 def get_embeddings(lines, _conn, showProgress=False):
-    if debug:
-        print("get_embeddings: " + str(len(lines)))
 
     cursor = _conn.cursor()
     text_hash_mapping = {md5_hash(text): text for text in lines}
     hashed_lines = list(text_hash_mapping.keys())
 
-    # No need to dedupe since we're using a set to create the hash mapping
     batch_size = 500
     all_embeddings = []
     embeddings_dict = {}
@@ -34,8 +30,6 @@ def get_embeddings(lines, _conn, showProgress=False):
         batch_hashes = hashed_lines[i:i + batch_size]
 
         query = "SELECT hash, embedding FROM ada_cache2 WHERE hash = ANY(%s)"
-        if debug:
-            print("checking cache")
         cursor.execute(query, (batch_hashes,))
         cached_results = cursor.fetchall()
 
@@ -45,19 +39,13 @@ def get_embeddings(lines, _conn, showProgress=False):
 
         if uncached_hashes:
             uncached_texts = [text_hash_mapping[hash] for hash in uncached_hashes]
-            if debug:
-                print("uncached: " + str(len(uncached_texts)))
+
             try:
-                if debug:
-                    print("calling openai")
                 result = client.embeddings.create(model='text-embedding-ada-002', input=uncached_texts)
             except Exception as e:
                 raise e
                         
             uncached_embeddings = [item.embedding for item in result.data]
-
-            if debug:
-                print("inserting into cache")
 
             records_to_insert = [
                 (hash, f'[{",".join(map(str, embedding))}]')
@@ -80,9 +68,6 @@ def get_embeddings(lines, _conn, showProgress=False):
     all_embeddings = [embeddings_dict[md5_hash(text)] for text in lines]
     cursor.close()
     _conn.commit()
-
-    if debug:
-        print("returning embeddings")
 
     if(len(all_embeddings) != len(lines)):
         raise Exception("Number of embeddings does not match number of lines")
