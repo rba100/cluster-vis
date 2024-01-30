@@ -22,7 +22,7 @@ def get_tsne_data(embeddings, dimensions=2, random_state=42, early_exaggeration=
 
     return X_tsne
 
-@st.cache_data(max_entries=4)
+@st.cache_data(max_entries=4, show_spinner="Rendering visualisation...")
 def render_tsne_plotly(xtsne, labelled_data, lines, label_descriptions, dimensions=2, height=1000):
     if dimensions not in [2, 3, 4]:
         raise ValueError("dimensions must be 2 or 3, or... 4")
