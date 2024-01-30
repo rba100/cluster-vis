@@ -1,17 +1,18 @@
-import openai
+from openai import OpenAI 
 import numpy as np
 import streamlit as st
 import json
 import hashlib
 
 debug = False
+client = OpenAI()
 
 def md5_hash(text):
     # Return MD5 hash of the given text
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
-@st.cache_data(max_entries=4)
-def get_embeddings(lines, _conn):
+@st.cache_data(max_entries=4, experimental_allow_widgets=True, show_spinner=False)
+def get_embeddings(lines, _conn, showProgress=False):
     if debug:
         print("get_embeddings: " + str(len(lines)))
 
@@ -24,7 +25,12 @@ def get_embeddings(lines, _conn):
     all_embeddings = []
     embeddings_dict = {}
 
+    if showProgress:
+        embeddingsProgress = st.progress(0, text="Encoding text items...")
+
     for i in range(0, len(hashed_lines), batch_size):
+        if showProgress and i != 0:
+            embeddingsProgress.progress(i / len(hashed_lines), text="Encoding text items...")
         batch_hashes = hashed_lines[i:i + batch_size]
 
         query = "SELECT hash, embedding FROM ada_cache2 WHERE hash = ANY(%s)"
@@ -44,7 +50,7 @@ def get_embeddings(lines, _conn):
             try:
                 if debug:
                     print("calling openai")
-                result = openai.embeddings.create(model='text-embedding-ada-002', input=uncached_texts)
+                result = client.embeddings.create(model='text-embedding-ada-002', input=uncached_texts)
             except Exception as e:
                 raise e
                         
@@ -69,7 +75,8 @@ def get_embeddings(lines, _conn):
             embeddings_dict.update({hash: embedding for hash, embedding in zip(uncached_hashes, uncached_embeddings)})
 
         embeddings_dict.update({hash: list(map(float, cached_hashes[hash][1:-1].split(','))) for hash in batch_hashes if hash in cached_hashes})
-
+    if showProgress:
+        embeddingsProgress.empty()
     all_embeddings = [embeddings_dict[md5_hash(text)] for text in lines]
     cursor.close()
     _conn.commit()
@@ -95,9 +102,9 @@ def getMidVector(v1, v2):
     return normalized_halfway_vector
 
 st.cache_data(max_entries=5)
-def get_embeddings_exp(items, _conn):
+def get_embeddings_exp(items, _conn, _progressCallback=None):
     non_composites = [item for item in items if not item.startswith('!')]
-    non_composite_vectors = get_embeddings(non_composites, _conn) if non_composites else []
+    non_composite_vectors = get_embeddings(non_composites, _conn, _progressCallback) if non_composites else []
     non_composite_iter = iter(non_composite_vectors)
     vectors = [getCompositeVector(item, _conn) if item.startswith('!') else next(non_composite_iter) for item in items]
     

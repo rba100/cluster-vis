@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
 
-@st.cache_data(max_entries=4)
+@st.cache_data(max_entries=4, show_spinner="Rendering visualisation...")
 def get_tsne_data(embeddings, dimensions=2, random_state=42, early_exaggeration=12.0):
 
     # Perform t-SNE dimensionality reduction

@@ -11,9 +11,6 @@ def classify_load_data(conn):
     labels_strings = st.session_state.labels_strings_raw.split("\n")
     st.session_state.data_strings = [x.strip() for x in data_strings if x.strip()]
     st.session_state.data_vectors = get_embeddings(st.session_state.data_strings, conn)
-    if(st.session_state.removeConceptText.strip() != ""):
-        vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
-        st.session_state.data_vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.data_vectors, vectorToRemove)
     st.session_state.labels_strings = list(map(getFieldName, [x.strip() for x in labels_strings if x.strip()]))
     for label in st.session_state.labels_strings:
         if not label in st.session_state.labels_thresholds:
@@ -37,8 +34,6 @@ def main():
 
     with tab1:
         st.session_state.data_strings_raw = st.text_area("Enter your text items", value=st.session_state.data_strings_raw)
-        st.session_state.removeConceptText = st.text_input("Common concept in all data (optional, experimental)", value=st.session_state.removeConceptText, help="If you have a concept that is common to all the items you can enter it here and then clustering will try to ignore that sentiment. For example, if you have a list of comments about 'car problems' you don't want the clustering to be dominated by the word 'car'. This is a feature that can really mess up the clustering if you enter text which isn't common to all text items because they will be modified as if they were which could take them literally anywhere in multidimentional vector space. When experimenting with this, try turninig off OpenAI cluster naming so you can see the underlying cluster concepts.")
-
         labelStringsKey, labelStringsUpdate = value_persister("labels_strings_raw")
         st.text_area("Enter your labels", key=labelStringsKey, on_change=labelStringsUpdate)
         submitText = "Submit" if st.session_state.data_vectors is None else "Apply"

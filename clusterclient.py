@@ -23,7 +23,7 @@ def get_clusters(_conn, algorithm, vectors, n_clusters, random_state=None, dista
     labels, descriptions, centroids = func()
     return labels, descriptions, centroids
 
-@st.cache_data(max_entries=4)
+@st.cache_data(max_entries=4, show_spinner="Clustering...")
 def get_clusters_kmeans(_conn, embeddings, n_clusters=10, random_state=42):
     # Connect to the database
     cursor = _conn.cursor()
@@ -47,7 +47,7 @@ def get_clusters_kmeans(_conn, embeddings, n_clusters=10, random_state=42):
 
     return kmeans.labels_, labels, cluster_centers
 
-@st.cache_data(max_entries=4)
+@st.cache_data(max_entries=4, show_spinner="Clustering...")
 def get_clusters_h(_conn, embeddings, n_clusters=10):
     # Connect to the database
     cursor = _conn.cursor()
@@ -76,7 +76,7 @@ def get_clusters_h(_conn, embeddings, n_clusters=10):
 
     return clustering.labels_, labels, cluster_centers
 
-@st.cache_data(max_entries=4)
+@st.cache_data(max_entries=4, show_spinner="Clustering...")
 def get_clusters_h_threshold(_conn, embeddings, distance_threshold=0.5):
     # Connect to the database
     cursor = _conn.cursor()
@@ -110,7 +110,7 @@ def get_clusters_h_threshold(_conn, embeddings, distance_threshold=0.5):
 
     return clustering.labels_, labels, cluster_centers
 
-@st.cache_data(max_entries=1)
+@st.cache_data(max_entries=1, show_spinner="Clustering...")
 def get_optimal_clusters_kmeans_elbow(_conn, embeddings, random_state=42):
     # Connect to the database
     cursor = _conn.cursor()
@@ -145,7 +145,7 @@ def get_optimal_clusters_kmeans_elbow(_conn, embeddings, random_state=42):
 
     return kmeans.labels_, labels, cluster_centers
 
-@st.cache_data(max_entries=1)
+@st.cache_data(max_entries=1, show_spinner="Clustering...")
 def get_optimal_clusters_kmeans_silhouette(_conn, embeddings):
     # Connect to the database
     cursor = _conn.cursor()
@@ -179,7 +179,7 @@ def get_optimal_clusters_kmeans_silhouette(_conn, embeddings):
 
     return kmeans.labels_, labels, cluster_centers
 
-@st.cache_data(max_entries=1)
+@st.cache_data(max_entries=1, show_spinner="Clustering...")
 def get_optimal_clusters_kmeans_silhouette2(_conn, embeddings, random_state=42):
     # Connect to the database
     cursor = _conn.cursor()

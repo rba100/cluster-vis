@@ -123,10 +123,15 @@ def main():
             st.caption(f"Showing {len(filtered_data)} of {len(st.session_state.tsne_data)} items")
 
         if (isGenerate):
-            st.session_state.data_vectors = get_embeddings(string_list, conn)
+            # Get vectors
+            st.session_state.data_vectors = get_embeddings(string_list, conn, showProgress=True)
+
+            # Remove concept
             if(st.session_state.removeConceptText.strip() != ""):
                 vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], conn)[0]
                 st.session_state.data_vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.data_vectors, vectorToRemove)
+
+            # Clustering
             labels, descriptions, centroids = get_clusters(conn,
                                                            st.session_state.clusteringAlgorithm,
                                                            st.session_state.data_vectors,
@@ -136,6 +141,8 @@ def main():
             st.session_state.labels = labels
             st.session_state.descriptions = descriptions
             st.session_state.centroids = centroids
+
+            # GPT labelling
             if(st.session_state.gptLabelling and len(st.session_state.descriptions) > 0 and len(st.session_state.descriptions) < 50):
                 tasks = []
                 for(i, label) in enumerate(st.session_state.descriptions):
@@ -145,6 +152,7 @@ def main():
                     tasks.append({"labels": label, "samples": samples})
                 st.session_state.descriptions = generate_cluster_names_many(tasks)
 
+            # TSNE
             st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed, early_exaggeration=st.session_state.early_exaggeration)
             fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions, height=height)
             st.plotly_chart(fig, use_container_width=True)
