@@ -1,6 +1,6 @@
 import streamlit as st
 
-def init_session_state(empty=None, strings=None, dicts=None, false=None):
+def init_session_state(empty=None, strings=None, dicts=None, false=None, true=None):
     if empty is None:
         empty = []
     if strings is None:
@@ -9,6 +9,8 @@ def init_session_state(empty=None, strings=None, dicts=None, false=None):
         dicts = []
     if false is None:
         false = []
+    if true is None:
+        true = []
     
     for item in empty:
         if item not in st.session_state:
@@ -25,6 +27,10 @@ def init_session_state(empty=None, strings=None, dicts=None, false=None):
     for item in false:
         if item not in st.session_state:
             st.session_state[item] = False
+
+    for item in true:
+        if item not in st.session_state:
+            st.session_state[item] = True
 
 def value_persister(valueKey, storeKey=None):
     """

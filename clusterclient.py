@@ -1,21 +1,20 @@
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import silhouette_samples
 from scipy.stats import iqr
 from kneed import KneeLocator
-from vectordbclient import get_closest_words;
+from dbclient import DBClient
 import streamlit as st
 
-def get_clusters(_conn, algorithm, vectors, n_clusters, random_state=None, distance_threshold=None):
+def get_clusters(_dbClient: DBClient, algorithm, vectors, n_clusters, random_state=None, distance_threshold=None):
     switcher = {
-        "KMeans": lambda: get_clusters_kmeans(_conn, vectors, n_clusters, random_state=random_state),
-        "KMeans (Elbow)": lambda: get_optimal_clusters_kmeans_elbow(_conn, vectors),
-        "KMeans (Silhouette)": lambda: get_optimal_clusters_kmeans_silhouette2(_conn, vectors),
-        "Hierarchical": lambda: get_clusters_h(_conn, vectors, n_clusters),
-        "Hierarchical (Threshold)": lambda: get_clusters_h_threshold(_conn, vectors, distance_threshold)
+        "KMeans": lambda: get_clusters_kmeans(_dbClient, vectors, n_clusters, random_state=random_state),
+        "KMeans (Elbow)": lambda: get_optimal_clusters_kmeans_elbow(_dbClient, vectors),
+        "KMeans (Silhouette)": lambda: get_optimal_clusters_kmeans_silhouette2(_dbClient, vectors),
+        "Hierarchical": lambda: get_clusters_h(_dbClient, vectors, n_clusters),
+        "Hierarchical (Threshold)": lambda: get_clusters_h_threshold(_dbClient, vectors, distance_threshold)
     }
     if(not algorithm in switcher):
         raise Exception("Invalid algorithm. Choices: KMeans, Hierarchical, Hierarchical (Threshold)")
@@ -24,9 +23,7 @@ def get_clusters(_conn, algorithm, vectors, n_clusters, random_state=None, dista
     return labels, descriptions, centroids
 
 @st.cache_data(max_entries=4, show_spinner="Clustering...")
-def get_clusters_kmeans(_conn, embeddings, n_clusters=10, random_state=42):
-    # Connect to the database
-    cursor = _conn.cursor()
+def get_clusters_kmeans(_dbClient: DBClient, embeddings, n_clusters=10, random_state=42):
 
     # Perform clustering
     n_init = 10
@@ -40,17 +37,13 @@ def get_clusters_kmeans(_conn, embeddings, n_clusters=10, random_state=42):
     # Lookup nearest 5 words for each normalized cluster center
     labels = []
     for i, center in enumerate(cluster_centers):
-        closest_words = get_closest_words(center, cursor, k=5)
+        closest_words = _dbClient.get_closest_words(center, k=5)
         labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
-
-    cursor.close()
 
     return kmeans.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=4, show_spinner="Clustering...")
-def get_clusters_h(_conn, embeddings, n_clusters=10):
-    # Connect to the database
-    cursor = _conn.cursor()
+def get_clusters_h(_dbClient: DBClient, embeddings, n_clusters=10):
 
     # Create a hierarchical clustering model with the specified number of clusters.
     # The 'affinity' is set to cosine to use cosine similarity as the distance metric.
@@ -69,17 +62,13 @@ def get_clusters_h(_conn, embeddings, n_clusters=10):
     # Lookup nearest 5 words for each normalized cluster center
     labels = []
     for i, center in enumerate(cluster_centers):
-        closest_words = get_closest_words(center, cursor, k=5)
+        closest_words = _dbClient.get_closest_words(center, k=5)
         labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
-
-    cursor.close()
 
     return clustering.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=4, show_spinner="Clustering...")
-def get_clusters_h_threshold(_conn, embeddings, distance_threshold=0.5):
-    # Connect to the database
-    cursor = _conn.cursor()
+def get_clusters_h_threshold(_dbClient: DBClient, embeddings, distance_threshold=0.5):
 
     # Create a hierarchical clustering model with no specified number of clusters.
     # Instead, use a distance threshold to determine the number of clusters.
@@ -103,17 +92,13 @@ def get_clusters_h_threshold(_conn, embeddings, distance_threshold=0.5):
     # Lookup nearest 5 words for each normalized cluster center
     labels = []
     for i, center in enumerate(cluster_centers):
-        closest_words = get_closest_words(center, cursor, k=5)
+        closest_words = _dbClient.get_closest_words(center, k=5)
         labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
-
-    cursor.close()
 
     return clustering.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=1, show_spinner="Clustering...")
-def get_optimal_clusters_kmeans_elbow(_conn, embeddings, random_state=42):
-    # Connect to the database
-    cursor = _conn.cursor()
+def get_optimal_clusters_kmeans_elbow(_dbClient: DBClient, embeddings, random_state=42):
 
     maxClusters = min(30, len(embeddings) - 1)
 
@@ -138,17 +123,13 @@ def get_optimal_clusters_kmeans_elbow(_conn, embeddings, random_state=42):
     # Lookup nearest 5 words for each normalized cluster center
     labels = []
     for i, center in enumerate(cluster_centers):
-        closest_words = get_closest_words(center, cursor, k=5)
+        closest_words = _dbClient.get_closest_words(center, k=5)
         labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
-
-    cursor.close()
 
     return kmeans.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=1, show_spinner="Clustering...")
-def get_optimal_clusters_kmeans_silhouette(_conn, embeddings):
-    # Connect to the database
-    cursor = _conn.cursor()
+def get_optimal_clusters_kmeans_silhouette(_dbClient: DBClient, embeddings):
 
     maxClusters = min(30, len(embeddings) -1)
 
@@ -172,18 +153,13 @@ def get_optimal_clusters_kmeans_silhouette(_conn, embeddings):
     # Lookup nearest 5 words for each normalized cluster center
     labels = []
     for i, center in enumerate(cluster_centers):
-        closest_words = get_closest_words(center, cursor, k=5)
+        closest_words = _dbClient.get_closest_words(center, k=5)
         labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
-
-    cursor.close()
 
     return kmeans.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=1, show_spinner="Clustering...")
-def get_optimal_clusters_kmeans_silhouette2(_conn, embeddings, random_state=42):
-    # Connect to the database
-    cursor = _conn.cursor()
-
+def get_optimal_clusters_kmeans_silhouette2(_dbClient: DBClient, embeddings, random_state=42):
     maxClusters = min(30, len(embeddings) -1)
 
     silhouette_scores = []
@@ -218,9 +194,7 @@ def get_optimal_clusters_kmeans_silhouette2(_conn, embeddings, random_state=42):
     # Lookup nearest 5 words for each normalized cluster center
     labels = []
     for i, center in enumerate(cluster_centers):
-        closest_words = get_closest_words(center, cursor, k=5)
+        closest_words = _dbClient.get_closest_words(center, k=5)
         labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
-
-    cursor.close()
 
     return kmeans.labels_, labels, cluster_centers

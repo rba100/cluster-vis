@@ -3,6 +3,7 @@ import numpy as np
 import streamlit as st
 import json
 import hashlib
+from dbclient import DBClient
 
 client = OpenAI()
 
@@ -11,9 +12,8 @@ def md5_hash(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 @st.cache_data(max_entries=4, experimental_allow_widgets=True, show_spinner=False)
-def get_embeddings(lines, _conn, showProgress=False):
+def get_embeddings(lines, _dbClient: DBClient, showProgress=False):
 
-    cursor = _conn.cursor()
     text_hash_mapping = {md5_hash(text): text for text in lines}
     hashed_lines = list(text_hash_mapping.keys())
 
@@ -29,9 +29,7 @@ def get_embeddings(lines, _conn, showProgress=False):
             embeddingsProgress.progress(i / len(hashed_lines), text="Encoding text items...")
         batch_hashes = hashed_lines[i:i + batch_size]
 
-        query = "SELECT hash, embedding FROM ada_cache2 WHERE hash = ANY(%s)"
-        cursor.execute(query, (batch_hashes,))
-        cached_results = cursor.fetchall()
+        cached_results =_dbClient.get_cached_embeddings(batch_hashes)
 
         # Separate the cached and uncached items
         cached_hashes = {item[0]: item[1] for item in cached_results}
@@ -52,22 +50,13 @@ def get_embeddings(lines, _conn, showProgress=False):
                 for hash, embedding in zip(uncached_hashes, uncached_embeddings)
             ]
 
-            insert_query = """
-            INSERT INTO ada_cache2 (hash, embedding)
-            VALUES (%s, %s)
-            ON CONFLICT DO NOTHING
-            """
-
-            cursor.executemany(insert_query, records_to_insert)
-            _conn.commit()
+            _dbClient.cache_embeddings(uncached_hashes, uncached_embeddings)
             embeddings_dict.update({hash: embedding for hash, embedding in zip(uncached_hashes, uncached_embeddings)})
 
         embeddings_dict.update({hash: list(map(float, cached_hashes[hash][1:-1].split(','))) for hash in batch_hashes if hash in cached_hashes})
     if showProgress:
         embeddingsProgress.empty()
     all_embeddings = [embeddings_dict[md5_hash(text)] for text in lines]
-    cursor.close()
-    _conn.commit()
 
     if(len(all_embeddings) != len(lines)):
         raise Exception("Number of embeddings does not match number of lines")
@@ -87,18 +76,18 @@ def getMidVector(v1, v2):
     return normalized_halfway_vector
 
 st.cache_data(max_entries=5)
-def get_embeddings_exp(items, _conn, _progressCallback=None):
+def get_embeddings_exp(items, _dbClient: DBClient, _progressCallback=None):
     non_composites = [item for item in items if not item.startswith('!')]
-    non_composite_vectors = get_embeddings(non_composites, _conn, _progressCallback) if non_composites else []
+    non_composite_vectors = get_embeddings(non_composites, _dbClient, _progressCallback) if non_composites else []
     non_composite_iter = iter(non_composite_vectors)
-    vectors = [getCompositeVector(item, _conn) if item.startswith('!') else next(non_composite_iter) for item in items]
+    vectors = [getCompositeVector(item, _dbClient) if item.startswith('!') else next(non_composite_iter) for item in items]
     
     return vectors
 
 # expressionString must be a string
 st.cache_data(max_entries=5)
 
-def getCompositeVector(expressionString: str, _conn):
+def getCompositeVector(expressionString: str, _dbClient: DBClient):
     if(len(expressionString) < 1):
         raise Exception("Expression string must be at least one character long")
     if(expressionString[0] != '!'):
@@ -113,7 +102,7 @@ def getCompositeVector(expressionString: str, _conn):
 
     # if list items are strings
     if all(isinstance(item, str) for item in terms):
-        vectors = get_embeddings(terms, _conn)
+        vectors = get_embeddings(terms, _dbClient)
         mean = np.mean(vectors, axis=0)
         return mean / np.linalg.norm(mean)
     # else if the list items are numbers that can be cast to floats
