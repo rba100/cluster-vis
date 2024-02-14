@@ -13,7 +13,7 @@ import json
 
 def main():
 
-    init_session_state(empty   = ['data_strings', 'labels_strings', 'data_vectors', 'centroids', 'dataframe', 'tsne_data', 'filterMask'],
+    init_session_state(empty   = ['data_strings', 'labels_strings', 'data_vectors', 'centroids', 'dataframe', 'tsne_data', 'filterMask', 'descriptions'],
                        strings = ['data_strings_raw', 'removeConceptText', 'comparison_text'],
                        dicts   = ['labels_thresholds'],
                        false   = ['use3d', 'lastfilterOut'],
@@ -168,6 +168,9 @@ def main():
                                                             early_exaggeration=st.session_state.early_exaggeration)
                 fig = render_tsne_plotly(st.session_state.tsne_data, st.session_state.labels, string_list, st.session_state.descriptions, dimensions=dimensions, height=height)
                 st.plotly_chart(fig, use_container_width=True)
+
+            if st.session_state.descriptions is not None:
+                st.text_area("Cluster descriptions", "\n".join(st.session_state.descriptions))
 
         if(st.session_state.centroids is not None and (importToClassify)):
                     descs = []

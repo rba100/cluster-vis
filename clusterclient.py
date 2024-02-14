@@ -80,8 +80,8 @@ def get_clusters_h_threshold(_dbClient: DBClient, embeddings, distance_threshold
     # The number of clusters is determined by the distance threshold
     n_clusters = clustering.n_clusters_
 
-    if(n_clusters > 30):
-        raise Exception(f"Too many clusters for the given threshold (30 max, {n_clusters} found).")
+    if(n_clusters > 45):
+        raise Exception(f"Too many clusters for the given threshold (45 max, {n_clusters} found).")
 
     # Find the centers of the clusters
     cluster_centers = np.array([embeddings[clustering.labels_ == i].mean(axis=0) for i in range(n_clusters)])
