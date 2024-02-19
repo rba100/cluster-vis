@@ -73,6 +73,9 @@ def main():
                 
                 gptLabellingKey, gptLabellingUpdate = value_persister("gptLabelling")
                 st.checkbox("Use OpenAI to name clusters", key=gptLabellingKey, on_change=gptLabellingUpdate, help="This will use OpenAI to generate a name for each cluster. This is experimental and may not work well. If you have a lot of clusters, it will take a long time to run. If you have more than 50 clusters, it will not run at all.")
+                if(st.session_state.gptLabelling):
+                    gptAdditionalInstructionsKey, gptAdditionalInstructionsUpdate = value_persister("gptAdditionalInstructions")
+                    st.text_input("Additional instructions for OpenAI (optional)", key=gptAdditionalInstructionsKey, on_change=gptAdditionalInstructionsUpdate, help="This affects the naming of the clusters only. Use to guide automatic naming away from unwanted themes.")
                 importToClassify = st.button("Import clusters to classify workflow", help="If you want to use the detected clusters as labels in the classify workflow, click this button.")
 
             with st.expander("Filtering", expanded=False):
@@ -92,7 +95,7 @@ def main():
                 if showFilteredTextItems:
                     st.text_area("Filtered text items", "\n".join(np.array(string_list)[st.session_state.filterMask]), help="You can copy this back into the text box above to generate a new plot with the filtered items.")
 
-            with st.expander("Help", expanded=True):
+            with st.expander("Help", expanded=False):
                 st.caption("This tool groups similar text items together and presents them as a visual plot. You can then mouse over the points to see the corresponding text and manually identify common themes.")
                 st.caption("The first step is to enter your text items in the box above, one per line, then click the 'Render'.")
                 st.caption("To help you spot common themes you can specify a number of clusters to identify and these will be colour-coded. This feature uses traditional statistical methods to identify clusters of similar items.")
@@ -154,7 +157,12 @@ def main():
                         # use seed from settings
                         np.random.seed(st.session_state.randomSeed)
                         samples = np.random.choice(samples, sample_count, replace=False)
-                        tasks.append({"labels": label, "samples": samples})
+                        task = {"labels": label, "samples": samples}
+                        if(st.session_state.gptAdditionalInstructions.strip() != ""):
+                            task["additionalInstructions"] = st.session_state.gptAdditionalInstructions
+                        else:
+                            task["additionalInstructions"] = ""
+                        tasks.append(task)
                     st.session_state.descriptions = generate_cluster_names_many(tasks)
 
                 # TSNE

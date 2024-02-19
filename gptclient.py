@@ -10,14 +10,14 @@ model = "gpt-3.5-turbo"
 def generate_cluster_names_many(tasks):
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         # Submit all tasks and collect futures
-        future_to_task = {executor.submit(generate_cluster_name, task["labels"], task["samples"]): i for i, task in enumerate(tasks)}
+        future_to_task = {executor.submit(generate_cluster_name, task["labels"], task["samples"], task["additionalInstructions"]): i for i, task in enumerate(tasks)}
         results = [None] * len(tasks)  # Pre-allocate the result list
         for future in concurrent.futures.as_completed(future_to_task):
             task_index = future_to_task[future]  # Get the original index of the task
             results[task_index] = future.result()  # Place result in the correct order
     return results
 
-def generate_cluster_name(labels, samples):
+def generate_cluster_name(labels, samples, additionalInstructions=None):
     if isinstance(labels, list):
         labels = ', '.join(labels)
     
@@ -29,7 +29,7 @@ Examine these samples of text:
 {nl.join(samples)}
 ```
 These have been matched against the words: {labels}.
-Give a name for a master label that encompasses the words are in the context of the samples (or a description of the common theme if the words are unhelpful).
+Give a name for a master label that encompasses the words in the context of the samples (or a description of the common theme if the words are unhelpful). {additionalInstructions}
 """
 
     completion = client.chat.completions.create(model=model,  temperature=0, messages=[
@@ -37,7 +37,7 @@ Give a name for a master label that encompasses the words are in the context of 
         {"role": "user", "content": prompt}])
     content =  completion.choices[0].message.content.rstrip('.')
     content = content[0].upper() + content[1:]
-    return content
+    return content.strip('"')
 
 def name_clusters_array(text_array):
 
