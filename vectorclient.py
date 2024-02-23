@@ -12,6 +12,9 @@ def md5_hash(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 @st.cache_data(max_entries=4, experimental_allow_widgets=True, show_spinner=False)
+def get_embeddings_st(lines, _dbClient: DBClient, showProgress=False):
+    return get_embeddings(lines, _dbClient, showProgress)
+
 def get_embeddings(lines, _dbClient: DBClient, showProgress=False):
 
     text_hash_mapping = {md5_hash(text): text for text in lines}
@@ -69,16 +72,14 @@ def reflect_vector(normal, target):
     return -target + 2 * np.dot(target, normal) * normal
 
 def getMidVector(v1, v2):
-    # Calculate the vector that is the sum of v1 and v2
     sum_vector = v1 + v2
-    # Normalize the sum_vector to find the halfway vector
     normalized_halfway_vector = sum_vector / np.linalg.norm(sum_vector)
     return normalized_halfway_vector
 
 st.cache_data(max_entries=5)
 def get_embeddings_exp(items, _dbClient: DBClient, _progressCallback=None):
     non_composites = [item for item in items if not item.startswith('!')]
-    non_composite_vectors = get_embeddings(non_composites, _dbClient, _progressCallback) if non_composites else []
+    non_composite_vectors = get_embeddings_st(non_composites, _dbClient, _progressCallback) if non_composites else []
     non_composite_iter = iter(non_composite_vectors)
     vectors = [getCompositeVector(item, _dbClient) if item.startswith('!') else next(non_composite_iter) for item in items]
     
@@ -102,7 +103,7 @@ def getCompositeVector(expressionString: str, _dbClient: DBClient):
 
     # if list items are strings
     if all(isinstance(item, str) for item in terms):
-        vectors = get_embeddings(terms, _dbClient)
+        vectors = get_embeddings_st(terms, _dbClient)
         mean = np.mean(vectors, axis=0)
         return mean / np.linalg.norm(mean)
     # else if the list items are numbers that can be cast to floats

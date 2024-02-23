@@ -10,11 +10,11 @@ import streamlit as st
 
 def get_clusters(_dbClient: DBClient, algorithm, vectors, n_clusters, random_state=None, distance_threshold=None):
     switcher = {
-        "KMeans": lambda: get_clusters_kmeans(_dbClient, vectors, n_clusters, random_state=random_state),
-        "KMeans (Elbow)": lambda: get_optimal_clusters_kmeans_elbow(_dbClient, vectors),
-        "KMeans (Silhouette)": lambda: get_optimal_clusters_kmeans_silhouette2(_dbClient, vectors),
-        "Hierarchical": lambda: get_clusters_h(_dbClient, vectors, n_clusters),
-        "Hierarchical (Threshold)": lambda: get_clusters_h_threshold(_dbClient, vectors, distance_threshold)
+        "KMeans": lambda: get_clusters_kmeans_st(_dbClient, vectors, n_clusters, random_state=random_state),
+        "KMeans (Elbow)": lambda: get_optimal_clusters_kmeans_elbow_st(_dbClient, vectors),
+        "KMeans (Silhouette)": lambda: get_optimal_clusters_kmeans_silhouette2_st(_dbClient, vectors),
+        "Hierarchical": lambda: get_clusters_h_st(_dbClient, vectors, n_clusters),
+        "Hierarchical (Threshold)": lambda: get_clusters_h_threshold_st(_dbClient, vectors, distance_threshold)
     }
     if(not algorithm in switcher):
         raise Exception("Invalid algorithm. Choices: KMeans, Hierarchical, Hierarchical (Threshold)")
@@ -23,6 +23,9 @@ def get_clusters(_dbClient: DBClient, algorithm, vectors, n_clusters, random_sta
     return labels, descriptions, centroids
 
 @st.cache_data(max_entries=4, show_spinner="Clustering...")
+def get_clusters_kmeans_st(_dbClient: DBClient, embeddings, n_clusters=10, random_state=42):
+    return get_clusters_kmeans(_dbClient, embeddings, n_clusters, random_state)
+
 def get_clusters_kmeans(_dbClient: DBClient, embeddings, n_clusters=10, random_state=42):
 
     # Perform clustering
@@ -38,11 +41,14 @@ def get_clusters_kmeans(_dbClient: DBClient, embeddings, n_clusters=10, random_s
     labels = []
     for i, center in enumerate(cluster_centers):
         closest_words = _dbClient.get_closest_words(center, k=5)
-        labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
+        labels.append(f"{', '.join(closest_words)}")
 
     return kmeans.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=4, show_spinner="Clustering...")
+def get_clusters_h_st(_dbClient: DBClient, embeddings, n_clusters=10):
+    return get_clusters_h(_dbClient, embeddings, n_clusters)
+
 def get_clusters_h(_dbClient: DBClient, embeddings, n_clusters=10):
 
     # Create a hierarchical clustering model with the specified number of clusters.
@@ -63,11 +69,14 @@ def get_clusters_h(_dbClient: DBClient, embeddings, n_clusters=10):
     labels = []
     for i, center in enumerate(cluster_centers):
         closest_words = _dbClient.get_closest_words(center, k=5)
-        labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
+        labels.append(f"{', '.join(closest_words)}")
 
     return clustering.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=4, show_spinner="Clustering...")
+def get_clusters_h_threshold_st(_dbClient: DBClient, embeddings, distance_threshold=0.5):
+    return get_clusters_h_threshold(_dbClient, embeddings, distance_threshold)
+
 def get_clusters_h_threshold(_dbClient: DBClient, embeddings, distance_threshold=0.5):
 
     # Create a hierarchical clustering model with no specified number of clusters.
@@ -93,11 +102,14 @@ def get_clusters_h_threshold(_dbClient: DBClient, embeddings, distance_threshold
     labels = []
     for i, center in enumerate(cluster_centers):
         closest_words = _dbClient.get_closest_words(center, k=5)
-        labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
+        labels.append(f"{', '.join(closest_words)}")
 
     return clustering.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=1, show_spinner="Clustering...")
+def get_optimal_clusters_kmeans_elbow_st(_dbClient: DBClient, embeddings, random_state=42):
+    return get_optimal_clusters_kmeans_elbow(_dbClient, embeddings, random_state)
+
 def get_optimal_clusters_kmeans_elbow(_dbClient: DBClient, embeddings, random_state=42):
 
     maxClusters = min(30, len(embeddings) - 1)
@@ -124,11 +136,14 @@ def get_optimal_clusters_kmeans_elbow(_dbClient: DBClient, embeddings, random_st
     labels = []
     for i, center in enumerate(cluster_centers):
         closest_words = _dbClient.get_closest_words(center, k=5)
-        labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
+        labels.append(f"{', '.join(closest_words)}")
 
     return kmeans.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=1, show_spinner="Clustering...")
+def get_optimal_clusters_kmeans_silhouette2_st(_dbClient: DBClient, embeddings, random_state=42):
+    return get_optimal_clusters_kmeans_silhouette2(_dbClient, embeddings, random_state)
+
 def get_optimal_clusters_kmeans_silhouette(_dbClient: DBClient, embeddings):
 
     maxClusters = min(30, len(embeddings) -1)
@@ -154,11 +169,14 @@ def get_optimal_clusters_kmeans_silhouette(_dbClient: DBClient, embeddings):
     labels = []
     for i, center in enumerate(cluster_centers):
         closest_words = _dbClient.get_closest_words(center, k=5)
-        labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
+        labels.append(f"{', '.join(closest_words)}")
 
     return kmeans.labels_, labels, cluster_centers
 
 @st.cache_data(max_entries=1, show_spinner="Clustering...")
+def get_optimal_clusters_kmeans_silhouette2_st(_dbClient: DBClient, embeddings, random_state=42):
+    return get_optimal_clusters_kmeans_silhouette2(_dbClient, embeddings, random_state)
+
 def get_optimal_clusters_kmeans_silhouette2(_dbClient: DBClient, embeddings, random_state=42):
     maxClusters = min(30, len(embeddings) -1)
 
@@ -195,6 +213,6 @@ def get_optimal_clusters_kmeans_silhouette2(_dbClient: DBClient, embeddings, ran
     labels = []
     for i, center in enumerate(cluster_centers):
         closest_words = _dbClient.get_closest_words(center, k=5)
-        labels.append(f"Cluster {i+1}: {', '.join(closest_words)}")
+        labels.append(f"{', '.join(closest_words)}")
 
     return kmeans.labels_, labels, cluster_centers

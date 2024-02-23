@@ -1,5 +1,5 @@
 import streamlit as st
-from vectorclient import get_embeddings, get_embeddings_exp, getFieldName, reflect_vector
+from vectorclient import get_embeddings_st, get_embeddings_exp, getFieldName, reflect_vector
 from sklearn.metrics.pairwise import cosine_similarity
 from st_utils import value_persister, init_session_state
 from dbclient import DBClient
@@ -11,7 +11,7 @@ def classify_load_data(_dbClient: DBClient):
     data_strings = st.session_state.data_strings_raw.split("\n")
     labels_strings = st.session_state.labels_strings_raw.split("\n")
     st.session_state.data_strings = [x.strip() for x in data_strings if x.strip()]
-    st.session_state.data_vectors = get_embeddings(st.session_state.data_strings, _dbClient)
+    st.session_state.data_vectors = get_embeddings_st(st.session_state.data_strings, _dbClient)
     st.session_state.labels_strings = list(map(getFieldName, [x.strip() for x in labels_strings if x.strip()]))
     for label in st.session_state.labels_strings:
         if not label in st.session_state.labels_thresholds:

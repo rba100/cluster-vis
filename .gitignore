@@ -2,6 +2,7 @@
 *.txt
 *.tsv
 *.csv
+*.tar
 
 # Python stuff
 **/__pycache__/*
@@ -9,3 +10,4 @@
 **/joblib/
 .vscode/settings.json
 tools/out
+publish*.ps1

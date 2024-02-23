@@ -7,6 +7,9 @@ client = OpenAI()
 model = "gpt-3.5-turbo"
 
 @st.cache_data(max_entries=40, show_spinner="Renaming clusters with GPT...")
+def generate_cluster_names_many_st(tasks):
+    return generate_cluster_names_many(tasks)
+
 def generate_cluster_names_many(tasks):
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         # Submit all tasks and collect futures
@@ -57,3 +60,17 @@ reply with a list of themes, one for each cluster. Do not write anything else, j
     if(len(lines) != len(text_array)):
         raise Exception("Number of lines returned does not match number of clusters")
     return lines
+
+def getCommonTheme(themes):
+    text = "\n".join(themes)
+    prompt = f"""
+Here is a list of themes observed in a corpus of text. The themes are:
+```
+{text}
+```
+If there are concepts that appear to be dominating the themes, reply with the name of the common theme. The common theme should be a short noun phrase or a single word and can be influenced by the words in brackets.
+If there are no common themes, reply with 'none', otherwise reply with the name of the common theme ONLY.
+"""
+    
+    completion = client.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}])
+    return completion.choices[0].message.content.split("\n")

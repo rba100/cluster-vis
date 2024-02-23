@@ -1,6 +1,6 @@
 import streamlit as st
-from vectorclient import get_embeddings, reflect_vector
-from gptclient import generate_cluster_names_many, name_clusters_array
+from vectorclient import get_embeddings_st, reflect_vector
+from gptclient import generate_cluster_names_many_st
 from clusterclient import get_clusters
 from dbclient import DBClient
 from visualclient import get_tsne_data, render_tsne_plotly
@@ -115,7 +115,7 @@ def main():
         with col2:
 
             if (isfilter):
-                comparison_embedding = get_embeddings([st.session_state.comparison_text.strip()], dbclient)[0]
+                comparison_embedding = get_embeddings_st([st.session_state.comparison_text.strip()], dbclient)[0]
                 similarities = cosine_similarity(st.session_state.data_vectors, comparison_embedding.reshape(1, -1)).flatten()
                 if filterOut:
                     st.session_state.filterMask = similarities < (1 - st.session_state.similarity_threshold)
@@ -130,11 +130,11 @@ def main():
 
             if (isGenerate):
                 # Get vectors
-                st.session_state.data_vectors = get_embeddings(string_list, dbclient, showProgress=True)
+                st.session_state.data_vectors = get_embeddings_st(string_list, dbclient, showProgress=True)
 
                 # Remove concept
                 if(st.session_state.removeConceptText.strip() != ""):
-                    vectorToRemove = get_embeddings([st.session_state.removeConceptText.strip()], dbclient)[0]
+                    vectorToRemove = get_embeddings_st([st.session_state.removeConceptText.strip()], dbclient)[0]
                     st.session_state.data_vectors = np.apply_along_axis(reflect_vector, 1, st.session_state.data_vectors, vectorToRemove)
 
                 # Clustering
@@ -163,7 +163,7 @@ def main():
                         else:
                             task["additionalInstructions"] = ""
                         tasks.append(task)
-                    st.session_state.descriptions = generate_cluster_names_many(tasks)
+                    st.session_state.descriptions = generate_cluster_names_many_st(tasks)
 
                 # TSNE
                 st.session_state.tsne_data = get_tsne_data(st.session_state.data_vectors, dimensions=dimensions, random_state=st.session_state.randomSeed, early_exaggeration=st.session_state.early_exaggeration)
