@@ -93,7 +93,7 @@ def main():
                     row = [st.session_state.data_strings[i]]
                     for j in range(len(st.session_state.labels_strings)):
                         similarityMatch = st.session_state.similarity[i][j] > 1 - st.session_state.labels_thresholds[st.session_state.labels_strings[j]]
-                        cellValue = '✓' if similarityMatch else ''
+                        cellValue = '1' if similarityMatch else ''
                         row.append(cellValue)
                     data.append(row)
                 st.session_state.dataframe = pd.DataFrame(data, columns=columns)
