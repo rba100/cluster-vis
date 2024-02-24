@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from dbclient import DBClient
 from vectorclient import get_embeddings, reflect_vector
-from clusterclient import get_clusters_kmeans
+from clusterclient import get_clusters_kmeans, get_optimal_clusters_kmeans_elbow
 from gptclient import getCommonTheme, generate_cluster_names_many
 
 connectionString = os.environ['pgVectorConnectionString']
@@ -27,7 +27,7 @@ def chooseK(size: int):
             break
     return k
 
-def getThemes(text: list, k: int = None, commonConcept: str = None):
+def getThemes(text: list, k: str = None, commonConcept: str = None):
 
     with psycopg2.connect(connectionString) as conn:
         with DBClient(conn) as dbClient:
@@ -40,7 +40,13 @@ def getThemes(text: list, k: int = None, commonConcept: str = None):
             if(commonConcept is not None):
                 commonVector = get_embeddings([commonConcept], dbClient)[0]
                 vectors = np.apply_along_axis(reflect_vector, 1, vectors, commonVector)
-            labels, descriptions, centroids = get_clusters_kmeans(dbClient, vectors, k)
+
+            if k == "auto":
+                labels, descriptions, centroids = get_optimal_clusters_kmeans_elbow(dbClient, vectors)
+            else:
+                k = int(k)
+                labels, descriptions, centroids = get_clusters_kmeans(dbClient, vectors, k)
+
             similarity = cosine_similarity(vectors, centroids)
 
             # GPT labelling
@@ -59,13 +65,18 @@ def getThemes(text: list, k: int = None, commonConcept: str = None):
             # Report generation
             themeReportItems = []    
             for(i, desc) in enumerate(descriptions):
-                similarityScores = similarity[:, i]
+                # get indicies of labels where value is i
+                clusterIndices = np.where(labels == i)
+                clusterSimilarity = similarity[clusterIndices]
+                clusterText = np.array(text)[clusterIndices]
+                similarityScores = clusterSimilarity[:, i]
                 top5 = np.argsort(similarityScores)[::-1][:5]
                 report = {
                     "name": clusterNames[i],
                     "concepts": desc,
-                    "topSamples": list(np.array(text)[top5]),
-                    "vector": list(centroids[i]),
+                    "topSamples": list(clusterText[top5]),
+                    "embeddingModel" : "text-embedding-ada-002",
+                    "embeddingVector": list(centroids[i]),
                 }
                 themeReportItems.append(report)
 

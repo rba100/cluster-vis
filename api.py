@@ -9,19 +9,18 @@ def get_themes():
     query_params = request.args.to_dict()
     request_body = request.get_json()
 
-    data = request_body.get('data', None)
+    input = request_body.get('input', None)
 
     k = query_params.get('k', None)
-    if k is not None and not k.isdigit():
-        return jsonify({ "error": "k must be a positive integer" }), 400    
-    k = int(k) if k is not None else None
+    if (k is not None and k != "auto") and not k.isdigit():
+        return jsonify({ "error": "k must be a positive integer or 'auto'" }), 400
 
     commonConcept = query_params.get('commonConcept', None)
 
-    if not isinstance(data, list) or not all(isinstance(item, str) for item in data):
-        return jsonify({ "error": "data must be a list of strings" }), 400
+    if not isinstance(input, list) or not all(isinstance(item, str) for item in input):
+        return jsonify({ "error": "input must be a list of strings" }), 400
     
-    response_data = getThemes(data, k, commonConcept)
+    response_data = getThemes(input, k, commonConcept)
 
     return response_data
 
