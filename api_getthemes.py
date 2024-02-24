@@ -3,7 +3,7 @@ import psycopg2
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from dbclient import DBClient
-from vectorclient import get_embeddings
+from vectorclient import get_embeddings, reflect_vector
 from clusterclient import get_clusters_kmeans
 from gptclient import getCommonTheme, generate_cluster_names_many
 
@@ -27,18 +27,23 @@ def chooseK(size: int):
             break
     return k
 
-def getThemes(text: list, k: int = None):
+def getThemes(text: list, k: int = None, commonConcept: str = None):
 
     with psycopg2.connect(connectionString) as conn:
         with DBClient(conn) as dbClient:
 
             if k is None:
                 k = chooseK(len(text))
-            
+                      
+            # Vector processing
             vectors = get_embeddings(text, dbClient)
+            if(commonConcept is not None):
+                commonVector = get_embeddings([commonConcept], dbClient)[0]
+                vectors = np.apply_along_axis(reflect_vector, 1, vectors, commonVector)
             labels, descriptions, centroids = get_clusters_kmeans(dbClient, vectors, k)
             similarity = cosine_similarity(vectors, centroids)
 
+            # GPT labelling
             tasks = []
             for(i, label) in enumerate(descriptions):
                 samples = np.array(text)[labels == i]
@@ -51,6 +56,7 @@ def getThemes(text: list, k: int = None):
             commonTheme = getCommonTheme(descriptions)
             clusterNames = generate_cluster_names_many(tasks)
 
+            # Report generation
             themeReportItems = []    
             for(i, desc) in enumerate(descriptions):
                 similarityScores = similarity[:, i]
