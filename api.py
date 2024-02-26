@@ -14,6 +14,9 @@ def get_themes():
     k = query_params.get('k', None)
     if (k is not None and k != "auto") and not k.isdigit():
         return jsonify({ "error": "k must be a positive integer or 'auto'" }), 400
+    
+    if(k is not None and k.isdigit() and int(k) > 50):
+        return jsonify({ "error": "k must be less than or equal to 50" }), 400
 
     commonConcept = query_params.get('commonConcept', None)
 

@@ -21,9 +21,9 @@ def chooseK(size: int):
     keys = list(kMap.keys())
     keys.sort()
     k = 35
-    for k in keys:
-        if size <= k:
-            k = kMap[k]
+    for key in keys:
+        if size <= key:
+            k = kMap[key]
             break
     return k
 
@@ -52,10 +52,17 @@ def getThemes(text: list, k: str = None, commonConcept: str = None):
             # GPT labelling
             tasks = []
             for(i, label) in enumerate(descriptions):
-                samples = np.array(text)[labels == i]
-                sample_count = min(20, len(samples))
+                # get indicies of labels where value is i
+                clusterIndices = np.where(labels == i)
+                clusterSimilarity = similarity[clusterIndices]
+                clusterText = np.array(text)[clusterIndices]
+                similarityScores = clusterSimilarity[:, i]
+                sortedIndicies = np.argsort(similarityScores)[::-1]
+                top3 = sortedIndicies[:3]
+                remaining = sortedIndicies[3:]
+                sample_count = min(2, len(remaining))
                 np.random.seed(42)
-                samples = np.random.choice(samples, sample_count, replace=False)
+                samples = np.concatenate((clusterText[top3], np.random.choice(clusterText[remaining], sample_count, replace=False)))
                 task = {"labels": label, "samples": samples, "additionalInstructions": ""}
                 tasks.append(task)
 
@@ -73,7 +80,7 @@ def getThemes(text: list, k: str = None, commonConcept: str = None):
                 top5 = np.argsort(similarityScores)[::-1][:5]
                 report = {
                     "name": clusterNames[i],
-                    "concepts": desc,
+                    "keywords": desc,
                     "topSamples": list(clusterText[top5]),
                     "embeddingModel" : "text-embedding-ada-002",
                     "embeddingVector": list(centroids[i]),

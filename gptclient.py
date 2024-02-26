@@ -21,13 +21,19 @@ def generate_cluster_names_many(tasks):
     return results
 
 def generate_cluster_name(labels, samples, additionalInstructions=None):
+    # First, we apply some hardcoded rules
+    poorQualityText = ["n/a", "none", "nothing", "not sure"]
+    for text in poorQualityText:
+        if sum(1 for sample in samples if text in sample.lower().strip()) >= 2:
+            return 'Poor quality: ' + text
+
     if isinstance(labels, list):
         labels = ', '.join(labels)
     
     nl = '\n'
 
     prompt = f"""
-Examine these samples of text:
+Examine these seperate lines of text:
 ```
 {nl.join(samples)}
 ```
@@ -73,4 +79,4 @@ If there are no common themes, reply with 'none', otherwise reply with the name 
 """
     
     completion = client.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}])
-    return completion.choices[0].message.content.split("\n")
+    return completion.choices[0].message.content.strip()
