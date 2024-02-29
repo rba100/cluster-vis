@@ -1,11 +1,18 @@
 import streamlit as st
 from ui_extract import main as extract
 from ui_classify import main as classify
+import requests
 
 st.set_page_config(layout="wide")
 
+def get_public_ip():
+    response = requests.get('https://httpbin.org/ip')
+    return response.json()['origin']
+
 if(st.secrets.has_key("maintenance") and st.secrets["maintenance"] == "true"):
     st.write("This app is currently under maintainance. Please check back later.")
+    public_ip = get_public_ip()
+    st.write(f'{public_ip}')
     st.stop()
 
 if not hasattr(st.session_state, 'mode'):
