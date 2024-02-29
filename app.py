@@ -4,7 +4,7 @@ from ui_classify import main as classify
 
 st.set_page_config(layout="wide")
 
-if(st.secrets.has_key("maintainance") and st.secrets["maintainance"] == "true"):
+if(st.secrets.has_key("maintenance") and st.secrets["maintenance"] == "true"):
     st.write("This app is currently under maintainance. Please check back later.")
     st.stop()
 
