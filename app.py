@@ -4,6 +4,10 @@ from ui_classify import main as classify
 
 st.set_page_config(layout="wide")
 
+if(st.secrets.has_key("maintainance") and st.secrets["maintainance"] == "true"):
+    st.write("This app is currently under maintainance. Please check back later.")
+    st.stop()
+
 if not hasattr(st.session_state, 'mode'):
     st.session_state.mode = 'Extract'
 
