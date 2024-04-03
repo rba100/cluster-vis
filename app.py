@@ -10,7 +10,7 @@ def get_public_ip():
     return response.json()['origin']
 
 if(st.secrets.has_key("maintenance") and st.secrets["maintenance"] == "true"):
-    st.write("This app is currently under maintenance. Please check back later.")
+    st.write("This app is currently under maintenance. Please contact Robin Anderson for assistance or try again later.")
     public_ip = get_public_ip()
     st.write(f'{public_ip}')
     st.stop()
